@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "942956893989",
+    "project_id": "protocolo-mob-ser",
+    "storage_bucket": "protocolo-mob-ser.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:942956893989:android:6abd447c7eedf55ac5accc",
+        "android_client_info": {
+          "package_name": "br.com.protocolo_mob_ser.app_cliente_protocolo_mob_ser"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "942956893989-uraesajfv7krb3vknto2c0altv0pdp2t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCEx3zFbgAIQlXK9WhTZw2Js6ZzsSe1b-A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "942956893989-uraesajfv7krb3vknto2c0altv0pdp2t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
