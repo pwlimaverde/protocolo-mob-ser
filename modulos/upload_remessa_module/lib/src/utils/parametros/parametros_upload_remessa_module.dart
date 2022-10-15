@@ -17,6 +17,23 @@ class ParametrosUploadRemessa implements ParametersReturnResult {
   });
 }
 
+class ParametrosUploadBoleto implements ParametersReturnResult {
+  final BoletoModel boletoUpload;
+  @override
+  final AppError error;
+  @override
+  final bool showRuntimeMilliseconds;
+  @override
+  final String nameFeature;
+
+  ParametrosUploadBoleto({
+    required this.boletoUpload,
+    required this.error,
+    required this.showRuntimeMilliseconds,
+    required this.nameFeature,
+  });
+}
+
 class ParametrosMapeamentoArquivoHtml implements ParametersReturnResult {
   final List<Map<String, Uint8List>> listaMapBytes;
   @override

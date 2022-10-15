@@ -3,44 +3,55 @@ import 'package:dependencies_module/dependencies_module.dart';
 import '../../../utils/parametros/parametros_upload_remessa_module.dart';
 
 class ProcessamentoDadosArquivoHtmlDatasource
-    implements Datasource<Map<String, List<RemessaModel>>> {
+    implements Datasource<Map<String, List<Map<String, dynamic>>>> {
   @override
-  Future<Map<String, List<RemessaModel>>> call(
+  Future<Map<String, List<Map<String, dynamic>>>> call(
       {required ParametersReturnResult parameters}) async {
     try {
       if (parameters is ParametrosProcessamentoArquivoHtml) {
-        List<RemessaModel> remessasProcessadas = [];
-        List<RemessaModel> remessasProcessadasError = [];
+        List<Map<String, dynamic>> remessasProcessadas = [];
+        List<Map<String, dynamic>> remessasProcessadasError = [];
         for (Map<String, dynamic> mapRemessa in parameters.listaMapBruta) {
           final String nomeArquivo = mapRemessa["arquivo"]["nome do arquivo"];
-          final List<Map<String, String>> listaBruta =
-              mapRemessa["arquivo"]["remessa"];
+          final List<Map<String, String>> listaBoletos =
+              mapRemessa["arquivo"]["boletos"];
+
+          final List<int> listaIdsContrato =
+              mapRemessa["arquivo"]["ID Contratos"];
 
           final DateTime data = mapRemessa["arquivo"]["data da remessa"];
           final String tipo = mapRemessa["arquivo"]["tipo do arquivo"];
 
-          if (listaBruta.isNotEmpty) {
+          if (listaBoletos.isNotEmpty) {
             final remessa = RemessaModel(
               nomeArquivo: nomeArquivo,
               data: Timestamp.fromDate(data),
               upload: Timestamp.fromDate(DateTime.now()),
-              remessa: await _processamentoBoleto(
-                tipoArquivo: tipo,
-                listaBruta: listaBruta,
-              ),
+              idsContrato: _idsContrato(filtro: listaIdsContrato),
             );
-            remessasProcessadas.add(remessa);
+
+            final boletos = await _processamentoBoleto(
+              tipoArquivo: tipo,
+              listaBoletos: listaBoletos,
+              listaIdsContrato: listaIdsContrato,
+              idRemessa: remessa.id,
+            );
+            remessasProcessadas.add({
+              "remessa": remessa,
+              "boletos": boletos,
+            });
           } else {
             final remessa = RemessaModel(
               nomeArquivo: nomeArquivo,
               data: Timestamp.fromDate(data),
               upload: Timestamp.fromDate(DateTime.now()),
-              remessa: <BoletoModel>[],
+              idsContrato: <int>[],
             );
-            remessasProcessadasError.add(remessa);
+            remessasProcessadasError
+                .add({"remessa": remessa, "boletos": <BoletoModel>[]});
           }
         }
-        final Map<String, List<RemessaModel>> remessas = {
+        final Map<String, List<Map<String, dynamic>>> remessas = {
           "remessasProcessadas": remessasProcessadas,
           "remessasProcessadasError": remessasProcessadasError,
         };
@@ -55,20 +66,50 @@ class ProcessamentoDadosArquivoHtmlDatasource
   }
 }
 
+List<int> _idsContrato({required List<int> filtro}) {
+  final listIdsBoletos = <int>[];
+  for (int id in filtro) {
+    if (!listIdsBoletos.contains(id)) {
+      listIdsBoletos.add(id);
+    }
+  }
+  return listIdsBoletos;
+}
+
 Future<List<BoletoModel>> _processamentoBoleto({
-  required List<Map<String, String>> listaBruta,
+  required List<Map<String, String>> listaBoletos,
   required String tipoArquivo,
+  required String idRemessa,
+  required List<int> listaIdsContrato,
 }) async {
   List<BoletoModel> boletos = [];
 
-  if (listaBruta.isNotEmpty) {
-    for (Map<String, String> boleto in listaBruta) {
+  if (listaBoletos.isNotEmpty) {
+    for (Map<String, String> boleto in listaBoletos) {
       if (tipoArquivo == "csv") {
-        BoletoModel model = BoletoModel.fromMapCsv(boleto);
+        BoletoModel model = BoletoModel.fromMapCsv(
+          idRemessa: idRemessa,
+          map: boleto,
+        );
+        final quantBoletos = listaIdsContrato
+            .where((element) => element == model.idContrato)
+            .length;
+        for (int id = 1; id < quantBoletos; id++) {
+          model.setQuantidadeBoletos();
+        }
         boletos.add(model);
       }
       if (tipoArquivo == "xlsx") {
-        BoletoModel model = BoletoModel.fromMapXlsx(boleto);
+        BoletoModel model = BoletoModel.fromMapXlsx(
+          idRemessa: idRemessa,
+          map: boleto,
+        );
+        final quantBoletos = listaIdsContrato
+            .where((element) => element == model.idContrato)
+            .length;
+        for (int id = 1; id < quantBoletos; id++) {
+          model.setQuantidadeBoletos();
+        }
         boletos.add(model);
       }
     }

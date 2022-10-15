@@ -83,7 +83,7 @@ class RemessasController extends GetxController
   //   if (arquivos.status == StatusResult.success) {
   //     return arquivos.result;
   //   } else {
-  //     coreModuleController.message(
+  //     designSystemController.message(
   //       MessageModel.error(
   //         title: 'Carregamento de arquivos',
   //         message: 'Erro ao carregar os arquivos - ${arquivos.result}',
@@ -108,7 +108,7 @@ class RemessasController extends GetxController
   //   if (mapeamento.status == StatusResult.success) {
   //     return mapeamento.result;
   //   } else {
-  //     coreModuleController.message(
+  //     designSystemController.message(
   //       MessageModel.error(
   //         title: 'Mapeamento de arquivos',
   //         message: 'Erro ao mapear os arquivos - ${mapeamento.result}',
@@ -136,7 +136,7 @@ class RemessasController extends GetxController
   //     final listRemessa = remessasProcessadas.result["remessasProcessadas"];
   //     final listRemessaError =
   //         remessasProcessadas.result["remessasProcessadasError"];
-  //     coreModuleController.message(
+  //     designSystemController.message(
   //       MessageModel.info(
   //         title: "Processamento de OPS",
   //         message:
@@ -149,7 +149,7 @@ class RemessasController extends GetxController
   //     if (listRemessa.isNotEmpty) {
   //       return listRemessa;
   //     } else {
-  //       coreModuleController.message(
+  //       designSystemController.message(
   //         MessageModel.error(
   //           title: 'Processamento de OPS',
   //           message: 'Erro! nenhuma OP a ser processada!',
@@ -158,7 +158,7 @@ class RemessasController extends GetxController
   //       return <RemessaModel>[];
   //     }
   //   } else {
-  //     coreModuleController.message(
+  //     designSystemController.message(
   //       MessageModel.error(
   //         title: 'Processamento de OPS',
   //         message: 'Erro ao processar as OPS!',
@@ -185,7 +185,7 @@ class RemessasController extends GetxController
   //   if (uploadOps is SuccessReturn<Map<String, List<OpsModel>>>) {
   //     return uploadOps.result;
   //   } else {
-  //     coreModuleController.message(
+  //     designSystemController.message(
   //       MessageModel.error(
   //         title: 'Triagem OPS',
   //         message: 'Erro ao fazer a triagem das OPS!',
@@ -209,7 +209,7 @@ class RemessasController extends GetxController
   //       final Future<Iterable<OpsModel>> waited = Future.wait(enviarOpsFuturo);
 
   //       await waited;
-  //       coreModuleController.message(
+  //       designSystemController.message(
   //         MessageModel.info(
   //           title: "Upload de OPS",
   //           message: "Upload de ${listOpsNovas.length} Ops com Sucesso!",
@@ -224,7 +224,7 @@ class RemessasController extends GetxController
   //       final Future<Iterable<OpsModel>> waited = Future.wait(enviarOpsFuturo);
 
   //       await waited;
-  //       coreModuleController.message(
+  //       designSystemController.message(
   //         MessageModel.info(
   //           title: "Upload de OPS",
   //           message: "Update de ${listOpsUpdate.length} Ops com Sucesso!",
@@ -233,7 +233,7 @@ class RemessasController extends GetxController
   //       updateCsvOpsList(listOpsUpdate);
   //     }
   //     if (listOpsDuplicadas.isNotEmpty) {
-  //       coreModuleController.message(
+  //       designSystemController.message(
   //         MessageModel.info(
   //           title: "Upload de OPS",
   //           message: "${listOpsDuplicadas.length} Ops duplicadas!",

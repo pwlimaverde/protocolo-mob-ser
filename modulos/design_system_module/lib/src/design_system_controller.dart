@@ -9,6 +9,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
+import 'mixins/ui/loader/loader_mixin.dart';
+import 'mixins/ui/messages/messages_mixin.dart';
 import 'widgets/botoes/botao_form/botao_form_widget.dart';
 import 'widgets/botoes/botao_limpar/botao_limpar_widget.dart';
 import 'widgets/botoes/botao_print/botao_print_widget.dart';
@@ -19,13 +21,25 @@ import 'widgets/header/header_widget.dart';
 import 'widgets/menu/menu_widget.dart';
 import 'widgets/right/right_widget.dart';
 
-class DesignSystemController extends GetxController {
+class DesignSystemController extends GetxController
+    with LoaderMixin, MessagesMixin {
   @override
   void onInit() {
-    // TODO: implement onInit
     super.onInit();
+    loaderListener(
+      statusLoad: statusLoad,
+    );
+    messageListener(
+      message: message,
+    );
     // getModelo();
   }
+
+  //Controller de Loading
+  final statusLoad = false.obs;
+
+  //Controller de Messages
+  final message = Rxn<MessageModel>();
 
   //Widgets Pages
   Scaffold scaffold({
@@ -399,76 +413,76 @@ class DesignSystemController extends GetxController {
   // }
 
   void _downloadXlsx({required RemessaModel filtro}) async {
-    const campos = <String>[
-      "ID Cliente",
-      "Cliente",
-      "Documento",
-      "Email",
-      "Telefone Fixo",
-      "Telefone Movel",
-      "ID Contrato",
-      "Data Habilitacao contrato",
-      "Número de Boleto",
-      "Forma de Cobrança",
-      "Data Vencimento Fatura",
-      "Valor Fatura",
-      "Data Emissao Fatura",
-      "Arquivo",
-      "Data Impressão Fatura",
-      "UF",
-      "Cidade",
-      "Bairro",
-      "Tipo Logradouro",
-      "Logradouro",
-      "Numero",
-      "CEP",
-      "Solicitante da Geração",
-      "ID Fatura",
-      "Referencia",
-      "Cód. De Barras",
-      "Receb Graf",
-      "Imp em massa",
-      "Term Imp",
-      "Upload",
-    ];
+    // const campos = <String>[
+    //   "ID Cliente",
+    //   "Cliente",
+    //   "Documento",
+    //   "Email",
+    //   "Telefone Fixo",
+    //   "Telefone Movel",
+    //   "ID Contrato",
+    //   "Data Habilitacao contrato",
+    //   "Número de Boleto",
+    //   "Forma de Cobrança",
+    //   "Data Vencimento Fatura",
+    //   "Valor Fatura",
+    //   "Data Emissao Fatura",
+    //   "Arquivo",
+    //   "Data Impressão Fatura",
+    //   "UF",
+    //   "Cidade",
+    //   "Bairro",
+    //   "Tipo Logradouro",
+    //   "Logradouro",
+    //   "Numero",
+    //   "CEP",
+    //   "Solicitante da Geração",
+    //   "ID Fatura",
+    //   "Referencia",
+    //   "Cód. De Barras",
+    //   "Receb Graf",
+    //   "Imp em massa",
+    //   "Term Imp",
+    //   "Upload",
+    // ];
 
-    var excel = Excel.createExcel();
-    Sheet sheetObject = excel[excel.getDefaultSheet()!];
-    CellStyle cellStyleTitulos =
-        CellStyle(horizontalAlign: HorizontalAlign.Center, bold: true);
+    // var excel = Excel.createExcel();
+    // Sheet sheetObject = excel[excel.getDefaultSheet()!];
+    // CellStyle cellStyleTitulos =
+    //     CellStyle(horizontalAlign: HorizontalAlign.Center, bold: true);
 
-    sheetObject.merge(
-        CellIndex.indexByString("A1"), CellIndex.indexByString("AD1"),
-        customValue: "SISTEMA DE REGISTRO DE PROTOCOLO");
+    // sheetObject.merge(
+    //     CellIndex.indexByString("A1"), CellIndex.indexByString("AD1"),
+    //     customValue: "SISTEMA DE REGISTRO DE PROTOCOLO");
 
-    var titulo = sheetObject
-        .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0));
-    titulo.cellStyle = cellStyleTitulos;
+    // var titulo = sheetObject
+    //     .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0));
+    // titulo.cellStyle = cellStyleTitulos;
 
-    for (var coluna = 0; coluna < campos.length; coluna++) {
-      var cell = sheetObject
-          .cell(CellIndex.indexByColumnRow(columnIndex: coluna, rowIndex: 1));
-      cell.value = campos[coluna];
-      cell.cellStyle = cellStyleTitulos;
-    }
+    // for (var coluna = 0; coluna < campos.length; coluna++) {
+    //   var cell = sheetObject
+    //       .cell(CellIndex.indexByColumnRow(columnIndex: coluna, rowIndex: 1));
+    //   cell.value = campos[coluna];
+    //   cell.cellStyle = cellStyleTitulos;
+    // }
 
-    for (BoletoModel boleto in filtro.remessa) {
-      int indexBoleto = filtro.remessa.indexOf(boleto) + 2;
-      final listValores = boleto.toListXlsx();
-      int indexValor = 0;
-      for (dynamic valor in listValores) {
-        // print(valor);
-        sheetObject
-            .cell(CellIndex.indexByColumnRow(
-                columnIndex: indexValor, rowIndex: indexBoleto))
-            .value = valor;
-        indexValor++;
-      }
-      sheetObject
-          .cell(CellIndex.indexByColumnRow(
-              columnIndex: indexValor, rowIndex: indexBoleto))
-          .value = _gerarCodigoDeBarras(boleto: boleto);
-    }
+    // for (BoletoModel boleto in filtro.remessa) {
+    //   int indexBoleto = filtro.remessa.indexOf(boleto) + 2;
+    //   final listValores = boleto.toListXlsx();
+    //   int indexValor = 0;
+    //   for (dynamic valor in listValores) {
+    //     // print(valor);
+    //     sheetObject
+    //         .cell(CellIndex.indexByColumnRow(
+    //             columnIndex: indexValor, rowIndex: indexBoleto))
+    //         .value = valor;
+    //     indexValor++;
+    //   }
+    //   sheetObject
+    //       .cell(CellIndex.indexByColumnRow(
+    //           columnIndex: indexValor, rowIndex: indexBoleto))
+    //       .value = _gerarCodigoDeBarras(boleto: boleto);
+    // }
 
     // for (var table in excel.tables.keys) {
     //   print(table); //sheet Name
@@ -479,7 +493,7 @@ class DesignSystemController extends GetxController {
     //   }
     // }
 
-    excel.save(fileName: "${filtro.nomeArquivo} - FILTRO.xlsx");
+    // excel.save(fileName: "${filtro.nomeArquivo} - FILTRO.xlsx");
   }
 
   String _gerarCodigoDeBarras({required BoletoModel boleto}) {
@@ -516,102 +530,102 @@ class DesignSystemController extends GetxController {
     );
   }
 
-  pw.Widget _protocolosListPrintWidget({
-    required RemessaModel filtro,
-    required dynamic netImage,
-  }) {
-    return pw.SizedBox(
-      width: coreModuleController.getSizeProporcao(
-        size: coreModuleController.size,
-        proporcao: 55,
-      ),
-      child: pw.ListView.builder(
-          itemCount: filtro.remessa.length,
-          itemBuilder: (context, index) {
-            final boletoModel = filtro.remessa[index];
-            return pw.Container(
-              // color: PdfColors.amber,
-              width: coreModuleController.getSizeProporcao(
-                size: coreModuleController.size,
-                proporcao: 50,
-              ),
-              height: 195,
-              child: pw.Stack(
-                children: [
-                  pw.Column(
-                    children: [
-                      pw.Center(
-                        child: pw.Image(netImage),
-                      ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        filtro.nomeArquivo,
-                        style: const pw.TextStyle(fontSize: 6),
-                      ),
-                    ],
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    mainAxisAlignment: pw.MainAxisAlignment.end,
-                  ),
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.fromLTRB(152, 35, 22, 10),
-                    child: pw.Container(
-                      width: 325,
-                      // color: PdfColors.red,
-                      child: pw.Text(
-                        "${boletoModel.cliente.toString()} - B. ${boletoModel.bairro.toString()} - ${boletoModel.cidade.toString()} / ${boletoModel.uf.toString()} ${boletoModel.tipoLogradouro.toString()} ${boletoModel.logradouro.toString()}, N.:${boletoModel.numero.toString()} - CEP: ${boletoModel.cep.toString()}",
-                        style: const pw.TextStyle(fontSize: 9),
-                      ),
-                    ),
-                  ),
-                  _codigoDeBarras(
-                    data: _gerarCodigoDeBarras(boleto: boletoModel),
-                  ),
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.fromLTRB(15, 60, 22, 10),
-                    child: pw.Align(
-                      alignment: pw.Alignment.topRight,
-                      child: pw.Text(
-                        dataFormatoDDMMYYYY.format(
-                          boletoModel.dataVencimentoFatura!.toDate(),
-                        ),
-                        style: const pw.TextStyle(fontSize: 9),
-                      ),
-                    ),
-                  ),
-                  pw.Padding(
-                    padding: const pw.EdgeInsets.fromLTRB(6, 35, 5, 10),
-                    child: pw.Align(
-                      alignment: pw.Alignment.bottomLeft,
-                      child: pw.Container(
-                        width: 127,
-                        // color: PdfColors.amber,
-                        child: pw.Column(
-                          children: [
-                            pw.Text(
-                              boletoModel.idCliente.toString(),
-                              style: const pw.TextStyle(fontSize: 10),
-                            ),
-                            pw.Text(
-                              "${boletoModel.cliente.toString()} - B. ${boletoModel.bairro.toString()} - ${boletoModel.cidade.toString()} / ${boletoModel.uf.toString()} ${boletoModel.tipoLogradouro.toString()} ${boletoModel.logradouro.toString()}, N.:${boletoModel.numero.toString()} - CEP: ${boletoModel.cep.toString()}${boletoModel.referencia.toString() != "null" ? " - REF.:${boletoModel.referencia}" : ""}",
-                              style: const pw.TextStyle(fontSize: 8),
-                            ),
-                            pw.Text(
-                              "Remetente:\nMOBTELECOM\nAV. Abolição, 4140 - Mucuripe\nFortaleza - CE\n60165-082",
-                              style: const pw.TextStyle(fontSize: 8),
-                            ),
-                          ],
-                          crossAxisAlignment: pw.CrossAxisAlignment.start,
-                          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-    );
-  }
+  // pw.Widget _protocolosListPrintWidget({
+  //   required RemessaModel filtro,
+  //   required dynamic netImage,
+  // }) {
+  //   return pw.SizedBox(
+  //     width: coreModuleController.getSizeProporcao(
+  //       size: coreModuleController.size,
+  //       proporcao: 55,
+  //     ),
+  //     child: pw.ListView.builder(
+  //         itemCount: filtro.remessa.length,
+  //         itemBuilder: (context, index) {
+  //           final boletoModel = filtro.remessa[index];
+  //           return pw.Container(
+  //             // color: PdfColors.amber,
+  //             width: coreModuleController.getSizeProporcao(
+  //               size: coreModuleController.size,
+  //               proporcao: 50,
+  //             ),
+  //             height: 195,
+  //             child: pw.Stack(
+  //               children: [
+  //                 pw.Column(
+  //                   children: [
+  //                     pw.Center(
+  //                       child: pw.Image(netImage),
+  //                     ),
+  //                     pw.SizedBox(height: 2),
+  //                     pw.Text(
+  //                       filtro.nomeArquivo,
+  //                       style: const pw.TextStyle(fontSize: 6),
+  //                     ),
+  //                   ],
+  //                   crossAxisAlignment: pw.CrossAxisAlignment.end,
+  //                   mainAxisAlignment: pw.MainAxisAlignment.end,
+  //                 ),
+  //                 pw.Padding(
+  //                   padding: const pw.EdgeInsets.fromLTRB(152, 35, 22, 10),
+  //                   child: pw.Container(
+  //                     width: 325,
+  //                     // color: PdfColors.red,
+  //                     child: pw.Text(
+  //                       "${boletoModel.cliente.toString()} - B. ${boletoModel.bairro.toString()} - ${boletoModel.cidade.toString()} / ${boletoModel.uf.toString()} ${boletoModel.tipoLogradouro.toString()} ${boletoModel.logradouro.toString()}, N.:${boletoModel.numero.toString()} - CEP: ${boletoModel.cep.toString()}",
+  //                       style: const pw.TextStyle(fontSize: 9),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 _codigoDeBarras(
+  //                   data: _gerarCodigoDeBarras(boleto: boletoModel),
+  //                 ),
+  //                 pw.Padding(
+  //                   padding: const pw.EdgeInsets.fromLTRB(15, 60, 22, 10),
+  //                   child: pw.Align(
+  //                     alignment: pw.Alignment.topRight,
+  //                     child: pw.Text(
+  //                       dataFormatoDDMMYYYY.format(
+  //                         boletoModel.dataVencimentoFatura!.toDate(),
+  //                       ),
+  //                       style: const pw.TextStyle(fontSize: 9),
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 pw.Padding(
+  //                   padding: const pw.EdgeInsets.fromLTRB(6, 35, 5, 10),
+  //                   child: pw.Align(
+  //                     alignment: pw.Alignment.bottomLeft,
+  //                     child: pw.Container(
+  //                       width: 127,
+  //                       // color: PdfColors.amber,
+  //                       child: pw.Column(
+  //                         children: [
+  //                           pw.Text(
+  //                             boletoModel.idCliente.toString(),
+  //                             style: const pw.TextStyle(fontSize: 10),
+  //                           ),
+  //                           pw.Text(
+  //                             "${boletoModel.cliente.toString()} - B. ${boletoModel.bairro.toString()} - ${boletoModel.cidade.toString()} / ${boletoModel.uf.toString()} ${boletoModel.tipoLogradouro.toString()} ${boletoModel.logradouro.toString()}, N.:${boletoModel.numero.toString()} - CEP: ${boletoModel.cep.toString()}${boletoModel.referencia.toString() != "null" ? " - REF.:${boletoModel.referencia}" : ""}",
+  //                             style: const pw.TextStyle(fontSize: 8),
+  //                           ),
+  //                           pw.Text(
+  //                             "Remetente:\nMOBTELECOM\nAV. Abolição, 4140 - Mucuripe\nFortaleza - CE\n60165-082",
+  //                             style: const pw.TextStyle(fontSize: 8),
+  //                           ),
+  //                         ],
+  //                         crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //                         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         }),
+  //   );
+  // }
 
   pw.Widget _codigoDeBarras({
     required String data,
@@ -658,48 +672,48 @@ class DesignSystemController extends GetxController {
     );
   }
 
-  pw.Widget _listaConferenciaPrintWidget({
-    required RemessaModel filtro,
-  }) {
-    return pw.SizedBox(
-      width: coreModuleController.getSizeProporcao(
-        size: coreModuleController.size,
-        proporcao: 55,
-      ),
-      child: pw.ListView.builder(
-          itemCount: filtro.remessa.length,
-          itemBuilder: (context, index) {
-            final boletoModel = filtro.remessa[index];
-            return pw.Container(
-              decoration: const pw.BoxDecoration(
-                color: PdfColors.white,
-                border: pw.Border(
-                  top: pw.BorderSide(width: 0.5, color: PdfColors.black),
-                  bottom: pw.BorderSide(width: 0.5, color: PdfColors.black),
-                ),
-              ),
-              width: coreModuleController.getSizeProporcao(
-                size: coreModuleController.size,
-                proporcao: 50,
-              ),
-              height: 12,
-              child: pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    "${(index + 1)} - ${boletoModel.cliente} - Doc.: ${boletoModel.documento.toString()}",
-                    style: const pw.TextStyle(fontSize: 10),
-                  ),
-                  pw.Text(
-                    "Boleto: ${boletoModel.numeroDeBoleto.toString()}",
-                    style: const pw.TextStyle(fontSize: 10),
-                  ),
-                ],
-              ),
-            );
-          }),
-    );
-  }
+  // pw.Widget _listaConferenciaPrintWidget({
+  //   required RemessaModel filtro,
+  // }) {
+  //   return pw.SizedBox(
+  //     width: coreModuleController.getSizeProporcao(
+  //       size: coreModuleController.size,
+  //       proporcao: 55,
+  //     ),
+  //     child: pw.ListView.builder(
+  //         itemCount: filtro.remessa.length,
+  //         itemBuilder: (context, index) {
+  //           final boletoModel = filtro.remessa[index];
+  //           return pw.Container(
+  //             decoration: const pw.BoxDecoration(
+  //               color: PdfColors.white,
+  //               border: pw.Border(
+  //                 top: pw.BorderSide(width: 0.5, color: PdfColors.black),
+  //                 bottom: pw.BorderSide(width: 0.5, color: PdfColors.black),
+  //               ),
+  //             ),
+  //             width: coreModuleController.getSizeProporcao(
+  //               size: coreModuleController.size,
+  //               proporcao: 50,
+  //             ),
+  //             height: 12,
+  //             child: pw.Row(
+  //               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+  //               children: [
+  //                 pw.Text(
+  //                   "${(index + 1)} - ${boletoModel.cliente} - Doc.: ${boletoModel.documento.toString()}",
+  //                   style: const pw.TextStyle(fontSize: 10),
+  //                 ),
+  //                 pw.Text(
+  //                   "Boleto: ${boletoModel.numeroDeBoleto.toString()}",
+  //                   style: const pw.TextStyle(fontSize: 10),
+  //                 ),
+  //               ],
+  //             ),
+  //           );
+  //         }),
+  //   );
+  // }
 
   _pdf2({
     required RemessaModel filtro,
@@ -756,10 +770,10 @@ class DesignSystemController extends GetxController {
         ),
         build: (context) => [
           pw.SizedBox(height: 10),
-          _protocolosListPrintWidget(
-            filtro: filtro,
-            netImage: netImage,
-          ),
+          // _protocolosListPrintWidget(
+          //   filtro: filtro,
+          //   netImage: netImage,
+          // ),
           pw.SizedBox(height: 10),
         ],
       ),
@@ -780,7 +794,7 @@ class DesignSystemController extends GetxController {
             style: const pw.TextStyle(fontSize: 12),
           ),
           pw.SizedBox(height: 10),
-          _listaConferenciaPrintWidget(filtro: filtro)
+          // _listaConferenciaPrintWidget(filtro: filtro)
         ],
       ),
     );
