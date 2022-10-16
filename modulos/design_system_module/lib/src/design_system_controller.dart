@@ -9,6 +9,8 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 
+import 'mixins/ui/loader/loader_mixin.dart';
+import 'mixins/ui/messages/messages_mixin.dart';
 import 'widgets/botoes/botao_form/botao_form_widget.dart';
 import 'widgets/botoes/botao_limpar/botao_limpar_widget.dart';
 import 'widgets/botoes/botao_print/botao_print_widget.dart';
@@ -19,13 +21,25 @@ import 'widgets/header/header_widget.dart';
 import 'widgets/menu/menu_widget.dart';
 import 'widgets/right/right_widget.dart';
 
-class DesignSystemController extends GetxController {
+class DesignSystemController extends GetxController
+    with LoaderMixin, MessagesMixin {
   @override
   void onInit() {
-    // TODO: implement onInit
     super.onInit();
+    loaderListener(
+      statusLoad: statusLoad,
+    );
+    messageListener(
+      message: message,
+    );
     // getModelo();
   }
+
+  //Controller de Loading
+  final statusLoad = false.obs;
+
+  //Controller de Messages
+  final message = Rxn<MessageModel>();
 
   //Widgets Pages
   Scaffold scaffold({
@@ -399,7 +413,8 @@ class DesignSystemController extends GetxController {
   // }
 
   void _downloadXlsx({required RemessaModel filtro}) async {
-    const campos = <String>[
+    final boletos = await remessasController.carregarBoletos(remessa: filtro);
+    const camposKeys = <String>[
       "ID Cliente",
       "Cliente",
       "Documento",
@@ -433,27 +448,31 @@ class DesignSystemController extends GetxController {
     ];
 
     var excel = Excel.createExcel();
+
     Sheet sheetObject = excel[excel.getDefaultSheet()!];
-    CellStyle cellStyleTitulos =
-        CellStyle(horizontalAlign: HorizontalAlign.Center, bold: true);
+    CellStyle cellStyleTitulos = CellStyle(
+      horizontalAlign: HorizontalAlign.Center,
+      bold: true,
+    );
 
     sheetObject.merge(
         CellIndex.indexByString("A1"), CellIndex.indexByString("AD1"),
-        customValue: "SISTEMA DE REGISTRO DE PROTOCOLO");
+        customValue:
+            "SISTEMA DE REGISTRO DE PROTOCOLO - ${filtro.nomeArquivo}");
 
     var titulo = sheetObject
         .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0));
     titulo.cellStyle = cellStyleTitulos;
 
-    for (var coluna = 0; coluna < campos.length; coluna++) {
+    for (var coluna = 0; coluna < camposKeys.length; coluna++) {
       var cell = sheetObject
           .cell(CellIndex.indexByColumnRow(columnIndex: coluna, rowIndex: 1));
-      cell.value = campos[coluna];
+      cell.value = camposKeys[coluna];
       cell.cellStyle = cellStyleTitulos;
     }
 
-    for (BoletoModel boleto in filtro.remessa) {
-      int indexBoleto = filtro.remessa.indexOf(boleto) + 2;
+    for (BoletoModel boleto in boletos) {
+      int indexBoleto = boletos.indexOf(boleto) + 2;
       final listValores = boleto.toListXlsx();
       int indexValor = 0;
       for (dynamic valor in listValores) {
@@ -470,15 +489,30 @@ class DesignSystemController extends GetxController {
           .value = _gerarCodigoDeBarras(boleto: boleto);
     }
 
-    // for (var table in excel.tables.keys) {
-    //   print(table); //sheet Name
-    //   print(excel.tables[table]?.maxCols);
-    //   print(excel.tables[table]?.maxRows);
-    //   for (var row in excel.tables[table]!.rows) {
-    //     print("$row");
-    //   }
-    // }
-
+    sheetObject.setColWidth(0, 10);
+    sheetObject.setColAutoFit(1);
+    sheetObject.setColWidth(2, 0);
+    sheetObject.setColWidth(3, 0);
+    sheetObject.setColWidth(4, 0);
+    sheetObject.setColWidth(5, 0);
+    sheetObject.setColAutoFit(6);
+    sheetObject.setColWidth(7, 0);
+    sheetObject.setColWidth(8, 0);
+    sheetObject.setColWidth(9, 0);
+    sheetObject.setColAutoFit(10);
+    sheetObject.setColWidth(11, 0);
+    sheetObject.setColWidth(12, 0);
+    sheetObject.setColWidth(13, 0);
+    sheetObject.setColWidth(14, 0);
+    for (var coluna = 15; coluna < camposKeys.length; coluna++) {
+      sheetObject.setColAutoFit(coluna);
+    }
+    sheetObject.setColWidth(17, 30);
+    sheetObject.setColWidth(18, 0);
+    sheetObject.setColWidth(22, 0);
+    sheetObject.setColWidth(23, 0);
+    sheetObject.setColWidth(24, 0);
+    sheetObject.setColWidth(25, 25);
     excel.save(fileName: "${filtro.nomeArquivo} - FILTRO.xlsx");
   }
 
@@ -516,19 +550,20 @@ class DesignSystemController extends GetxController {
     );
   }
 
-  pw.Widget _protocolosListPrintWidget({
-    required RemessaModel filtro,
+  Future<pw.Widget> _protocolosListPrintWidget({
+    required RemessaModel remessa,
+    required List<BoletoModel> boletos,
     required dynamic netImage,
-  }) {
+  }) async {
     return pw.SizedBox(
       width: coreModuleController.getSizeProporcao(
         size: coreModuleController.size,
         proporcao: 55,
       ),
       child: pw.ListView.builder(
-          itemCount: filtro.remessa.length,
+          itemCount: boletos.length,
           itemBuilder: (context, index) {
-            final boletoModel = filtro.remessa[index];
+            final boletoModel = boletos[index];
             return pw.Container(
               // color: PdfColors.amber,
               width: coreModuleController.getSizeProporcao(
@@ -538,19 +573,18 @@ class DesignSystemController extends GetxController {
               height: 195,
               child: pw.Stack(
                 children: [
-                  pw.Column(
-                    children: [
-                      pw.Center(
-                        child: pw.Image(netImage),
+                  pw.Center(
+                    child: pw.Image(netImage),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.fromLTRB(0, 0, 3, 8),
+                    child: pw.Align(
+                      alignment: pw.Alignment.bottomRight,
+                      child: pw.Text(
+                        remessa.nomeArquivo,
+                        style: const pw.TextStyle(fontSize: 5.5),
                       ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        filtro.nomeArquivo,
-                        style: const pw.TextStyle(fontSize: 6),
-                      ),
-                    ],
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    mainAxisAlignment: pw.MainAxisAlignment.end,
+                    ),
                   ),
                   pw.Padding(
                     padding: const pw.EdgeInsets.fromLTRB(152, 35, 22, 10),
@@ -565,6 +599,16 @@ class DesignSystemController extends GetxController {
                   ),
                   _codigoDeBarras(
                     data: _gerarCodigoDeBarras(boleto: boletoModel),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.fromLTRB(0, 8, 3, 0),
+                    child: pw.Align(
+                      alignment: pw.Alignment.topRight,
+                      child: pw.Text(
+                        "${boletoModel.idContrato.toString()} - ${boletoModel.quantidadeBoletos < 10 ? "0${boletoModel.quantidadeBoletos.toString()}" : boletoModel.quantidadeBoletos.toString()} b",
+                        style: const pw.TextStyle(fontSize: 8),
+                      ),
+                    ),
                   ),
                   pw.Padding(
                     padding: const pw.EdgeInsets.fromLTRB(15, 60, 22, 10),
@@ -658,22 +702,22 @@ class DesignSystemController extends GetxController {
     );
   }
 
-  pw.Widget _listaConferenciaPrintWidget({
-    required RemessaModel filtro,
-  }) {
+  Future<pw.Widget> _listaConferenciaPrintWidget({
+    required List<BoletoModel> boletos,
+  }) async {
     return pw.SizedBox(
       width: coreModuleController.getSizeProporcao(
         size: coreModuleController.size,
         proporcao: 55,
       ),
       child: pw.ListView.builder(
-          itemCount: filtro.remessa.length,
+          itemCount: boletos.length,
           itemBuilder: (context, index) {
-            final boletoModel = filtro.remessa[index];
+            final boletoModel = boletos[index];
             return pw.Container(
-              decoration: const pw.BoxDecoration(
-                color: PdfColors.white,
-                border: pw.Border(
+              decoration: pw.BoxDecoration(
+                color: (index % 2) == 0 ? PdfColors.white : PdfColors.grey200,
+                border: const pw.Border(
                   top: pw.BorderSide(width: 0.5, color: PdfColors.black),
                   bottom: pw.BorderSide(width: 0.5, color: PdfColors.black),
                 ),
@@ -686,13 +730,71 @@ class DesignSystemController extends GetxController {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Text(
-                    "${(index + 1)} - ${boletoModel.cliente} - Doc.: ${boletoModel.documento.toString()}",
-                    style: const pw.TextStyle(fontSize: 10),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                    children: [
+                      pw.SizedBox(
+                        width: 25,
+                        child: pw.Container(
+                            alignment: pw.Alignment.centerRight,
+                            child: pw.Text(
+                              "${(index + 1)}",
+                              style: const pw.TextStyle(fontSize: 10),
+                            )),
+                      ),
+                      pw.SizedBox(
+                        width: 10,
+                      ),
+                      pw.SizedBox(
+                        width: 270,
+                        child: pw.Container(
+                            child: pw.Text(
+                          boletoModel.cliente,
+                          style: const pw.TextStyle(fontSize: 10),
+                        )),
+                      ),
+                    ],
                   ),
-                  pw.Text(
-                    "Boleto: ${boletoModel.numeroDeBoleto.toString()}",
-                    style: const pw.TextStyle(fontSize: 10),
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
+                    children: [
+                      pw.SizedBox(
+                        width: 100,
+                        child: pw.Container(
+                            child: pw.Text(
+                          "ID Cliente: ${boletoModel.idCliente.toString()}",
+                          style: const pw.TextStyle(fontSize: 9),
+                        )),
+                      ),
+                      pw.SizedBox(
+                        width: 100,
+                        child: pw.Container(
+                            child: pw.Text(
+                          "ID Contrato: ${boletoModel.idContrato.toString()}",
+                          style: const pw.TextStyle(fontSize: 9),
+                        )),
+                      ),
+                      pw.SizedBox(
+                        width: 35,
+                        child: pw.Container(
+                            alignment: pw.Alignment.centerRight,
+                            child: pw.Text(
+                              "Boletos: ",
+                              style: const pw.TextStyle(fontSize: 9),
+                            )),
+                      ),
+                      pw.SizedBox(
+                        width: 15,
+                        child: pw.Container(
+                            alignment: pw.Alignment.centerLeft,
+                            child: pw.Text(
+                              boletoModel.quantidadeBoletos < 10
+                                  ? "0${boletoModel.quantidadeBoletos.toString()}"
+                                  : boletoModel.quantidadeBoletos.toString(),
+                              style: const pw.TextStyle(fontSize: 9),
+                            )),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -729,6 +831,7 @@ class DesignSystemController extends GetxController {
     final pdf = pw.Document(version: PdfVersion.pdf_1_5, compress: true);
     final netImage = await networkImage(
         "https://firebasestorage.googleapis.com/v0/b/protocolo-mob-ser.appspot.com/o/modelo%2FBASE-PROTOCOLO-MOB.jpeg?alt=media&token=ef0bcb4a-7531-4f7a-8815-63e11eac817e");
+    final boletos = await remessasController.carregarBoletos(remessa: filtro);
     // for (BoletoModel boleto in filtro) {
     //   final codigoDeBarras = await networkImage(
     //       "https://cors-anywhere.herokuapp.com/https://berrywing.com/barcode/Code128.aspx?bc=${boleto.numeroDeBoleto}");
@@ -744,6 +847,14 @@ class DesignSystemController extends GetxController {
     // final Future<Iterable<Map<String, dynamic>>> waited =
     //     Future.wait(gerarCodigo);
     // await waited.then((value) => listCod.addAll(value));
+    final protocolos = await _protocolosListPrintWidget(
+      remessa: filtro,
+      netImage: netImage,
+      boletos: boletos,
+    );
+
+    final listConferencia =
+        await _listaConferenciaPrintWidget(boletos: boletos);
 
     pdf.addPage(
       pw.MultiPage(
@@ -756,10 +867,7 @@ class DesignSystemController extends GetxController {
         ),
         build: (context) => [
           pw.SizedBox(height: 10),
-          _protocolosListPrintWidget(
-            filtro: filtro,
-            netImage: netImage,
-          ),
+          protocolos,
           pw.SizedBox(height: 10),
         ],
       ),
@@ -780,7 +888,7 @@ class DesignSystemController extends GetxController {
             style: const pw.TextStyle(fontSize: 12),
           ),
           pw.SizedBox(height: 10),
-          _listaConferenciaPrintWidget(filtro: filtro)
+          listConferencia
         ],
       ),
     );

@@ -17,6 +17,23 @@ class ParametrosUploadRemessa implements ParametersReturnResult {
   });
 }
 
+class ParametrosCarregarBoletos implements ParametersReturnResult {
+  final RemessaModel remessaCarregada;
+  @override
+  final AppError error;
+  @override
+  final bool showRuntimeMilliseconds;
+  @override
+  final String nameFeature;
+
+  ParametrosCarregarBoletos({
+    required this.remessaCarregada,
+    required this.error,
+    required this.showRuntimeMilliseconds,
+    required this.nameFeature,
+  });
+}
+
 class ParametrosMapeamentoArquivoHtml implements ParametersReturnResult {
   final List<Map<String, Uint8List>> listaMapBytes;
   @override

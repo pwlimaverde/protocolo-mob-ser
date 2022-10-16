@@ -16,6 +16,9 @@ class CoreModuleBindings implements Bindings {
         carregarRemessasFirebaseUsecase: CarregarRemessasFirebaseUsecase(
           datasource: CarregarRemessasFirebaseDatasource(),
         ),
+        carregarBoletosFirebaseUsecase: CarregarBoletosFirebaseUsecase(
+          datasource: CarregarBoletosFirebaseDatasource(),
+        ),
       ),
       permanent: true,
     );

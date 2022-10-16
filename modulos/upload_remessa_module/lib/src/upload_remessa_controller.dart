@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'features/mapeamento_dados_arquivo_html/domain/usecase/mapeamento_dados_arquivo_html_usecase.dart';
 import 'features/processamento_dados_arquivo_html/domain/usecase/processamento_dados_arquivo_html_usecase.dart';
+import 'features/upload_boleto_firebase/domain/usecase/upload_boleto_firebase_usecase.dart';
 import 'features/upload_remessa_firebase/domain/usecase/upload_remessa_firebase_usecase.dart';
 import 'utils/errors/erros_upload_remessa.dart';
 import 'utils/parametros/parametros_upload_remessa_module.dart';
@@ -14,11 +15,13 @@ class UploadRemessaController extends GetxController
   final ProcessamentoDadosArquivoHtmlUsecase
       processamentoDadosArquivoHtmlUsecase;
   final UploadRemessaFirebaseUsecase uploadRemessaFirebaseUsecase;
+  final UploadBoletoFirebaseUsecase uploadBoletoFirebaseUsecase;
   UploadRemessaController({
     required this.uploadArquivoHtmlPresenter,
     required this.mapeamentoDadosArquivoHtmlUsecase,
     required this.processamentoDadosArquivoHtmlUsecase,
     required this.uploadRemessaFirebaseUsecase,
+    required this.uploadBoletoFirebaseUsecase,
   });
 
   final List<Tab> myTabs = <Tab>[
@@ -82,13 +85,15 @@ class UploadRemessaController extends GetxController
 
   Future<void> setUploadOps() async {
     _clearLists();
-    _uploadRemessas(
+    designSystemController.statusLoad(true);
+    await _uploadRemessas(
       novasRemessas: await _processamentoDados(
         listaMapBruta: await _mapeamentoDadosArquivo(
           listaMapBytes: await _carregarArquivos(),
         ),
       ),
     );
+    designSystemController.statusLoad(false);
   }
 
   Future<List<Map<String, Uint8List>>> _carregarArquivos() async {
@@ -104,7 +109,7 @@ class UploadRemessaController extends GetxController
     if (arquivos.status == StatusResult.success) {
       return arquivos.result;
     } else {
-      coreModuleController.message(
+      designSystemController.message(
         MessageModel.error(
           title: 'Carregamento de arquivos',
           message: 'Erro ao carregar os arquivos',
@@ -129,7 +134,7 @@ class UploadRemessaController extends GetxController
     if (mapeamento.status == StatusResult.success) {
       return mapeamento.result;
     } else {
-      coreModuleController.message(
+      designSystemController.message(
         MessageModel.error(
           title: 'Mapeamento de arquivos',
           message: 'Erro ao mapear os arquivos.',
@@ -139,7 +144,7 @@ class UploadRemessaController extends GetxController
     }
   }
 
-  Future<List<RemessaModel>> _processamentoDados({
+  Future<List<Map<String, dynamic>>> _processamentoDados({
     required List<Map<String, Map<String, dynamic>>> listaMapBruta,
   }) async {
     final remessasProcessadas = await processamentoDadosArquivoHtmlUsecase(
@@ -154,10 +159,21 @@ class UploadRemessaController extends GetxController
     );
 
     if (remessasProcessadas.status == StatusResult.success) {
-      final List<RemessaModel> listRemessa =
+      final List<RemessaModel> listRemessa = [];
+      final List<RemessaModel> listRemessaError = [];
+
+      final List<Map<String, dynamic>> listRemessaProcessadasMap =
           remessasProcessadas.result["remessasProcessadas"];
-      final List<RemessaModel> listRemessaError =
+      final List<Map<String, dynamic>> listRemessaProcessadasErrorMap =
           remessasProcessadas.result["remessasProcessadasError"];
+
+      for (Map<String, dynamic> remessa in listRemessaProcessadasMap) {
+        listRemessa.add(remessa["remessa"]);
+      }
+      for (Map<String, dynamic> remessa in listRemessaProcessadasErrorMap) {
+        listRemessaError.add(remessa["remessa"]);
+      }
+
       final List<RemessaModel> listRemessasDuplicadas = [];
       final List<RemessaModel> listRemessasNovas = [];
 
@@ -171,7 +187,7 @@ class UploadRemessaController extends GetxController
           listRemessasDuplicadas.add(remessa);
         }
       }
-      coreModuleController.message(
+      designSystemController.message(
         MessageModel.info(
           title: "Processamento de Remessa",
           message:
@@ -185,41 +201,53 @@ class UploadRemessaController extends GetxController
         _uploadRemessaListError(listRemessaError);
       }
       if (listRemessasNovas.isNotEmpty) {
-        return listRemessasNovas;
+        return listRemessaProcessadasMap;
       } else {
-        coreModuleController.message(
+        designSystemController.message(
           MessageModel.info(
             title: 'Processamento de Remessa',
             message: 'Nenhuma Remessa Nova a ser processada!',
           ),
         );
-        return <RemessaModel>[];
+        return <Map<String, dynamic>>[];
       }
     } else {
-      coreModuleController.message(
+      designSystemController.message(
         MessageModel.error(
           title: 'Processamento de Remessa',
           message: 'Erro ao processar as Remessa!',
         ),
       );
-      return <RemessaModel>[];
+      return <Map<String, dynamic>>[];
     }
   }
 
   Future<void> _uploadRemessas({
-    required List<RemessaModel> novasRemessas,
+    required List<Map<String, dynamic>> novasRemessas,
   }) async {
     try {
       if (novasRemessas.isNotEmpty) {
-        final Iterable<Future<RemessaModel>> enviarRemessasFuturo =
-            novasRemessas.map(_enviarNovaRemessa);
+        List<RemessaModel> listRemessa = [];
+        List<BoletoModel> listBoleto = [];
+        for (Map<String, dynamic> remessa in novasRemessas) {
+          listRemessa.add(remessa["remessa"]);
+          listBoleto.addAll(remessa["boletos"]);
+        }
 
-        final Future<Iterable<RemessaModel>> waited =
+        final Iterable<Future<RemessaModel>> enviarRemessasFuturo =
+            listRemessa.map(_enviarNovaRemessa);
+        final Iterable<Future<BoletoModel>> enviarBoletosFuturo =
+            listBoleto.map(_enviarNovoBoleto);
+
+        final Future<Iterable<RemessaModel>> waitedRemessas =
             Future.wait(enviarRemessasFuturo);
 
-        await waited;
-        _uploadRemessaList(novasRemessas);
-        coreModuleController.message(
+        final Future<Iterable<BoletoModel>> waitedBoletos =
+            Future.wait(enviarBoletosFuturo);
+        await waitedRemessas;
+        await waitedBoletos;
+        _uploadRemessaList(listRemessa);
+        designSystemController.message(
           MessageModel.info(
             title: "Upload de Remessa",
             message: "Upload de ${novasRemessas.length} Remessa com Sucesso!",
@@ -227,7 +255,7 @@ class UploadRemessaController extends GetxController
         );
       }
     } catch (e) {
-      coreModuleController.message(
+      designSystemController.message(
         MessageModel.error(
           title: 'Upload de Remessa',
           message: 'Erro ao fazer o Upload da Remessa!',
@@ -252,13 +280,38 @@ class UploadRemessaController extends GetxController
     if (uploadFirebase.status == StatusResult.success) {
       return model;
     } else {
-      coreModuleController.message(
+      designSystemController.message(
         MessageModel.error(
           title: 'Upload de Remessa Firebase',
           message: 'Erro enviar a remessa para o banco de dados!',
         ),
       );
       throw Exception("Erro enviar a remessa para o banco de dados!");
+    }
+  }
+
+  Future<BoletoModel> _enviarNovoBoleto(BoletoModel model) async {
+    final uploadFirebase = await uploadBoletoFirebaseUsecase(
+      parameters: ParametrosUploadBoleto(
+        boletoUpload: model,
+        error: ErroUploadArquivo(
+            message:
+                "Erro ao fazer o upload da Remessa para o banco de dados!"),
+        showRuntimeMilliseconds: true,
+        nameFeature: "upload firebase",
+      ),
+    );
+
+    if (uploadFirebase.status == StatusResult.success) {
+      return model;
+    } else {
+      designSystemController.message(
+        MessageModel.error(
+          title: 'Upload de Boleto Firebase',
+          message: 'Erro enviar o boleto para o banco de dados!',
+        ),
+      );
+      throw Exception("Erro enviar o boleto para o banco de dados!");
     }
   }
 }

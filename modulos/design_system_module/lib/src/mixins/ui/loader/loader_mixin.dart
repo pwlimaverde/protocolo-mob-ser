@@ -9,13 +9,11 @@ mixin LoaderMixin on GetxController {
       statusLoad,
       (loading) {
         if (loading) {
-          WidgetsBinding.instance.addPostFrameCallback((duration) async {
-            await Get.dialog(
-              const Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          });
+          Get.dialog(
+            const Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         } else {
           Get.back();
         }

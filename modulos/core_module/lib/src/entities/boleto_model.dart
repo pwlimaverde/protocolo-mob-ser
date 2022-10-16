@@ -2,8 +2,9 @@ import 'dart:convert';
 import 'package:dependencies_module/dependencies_module.dart';
 
 class BoletoModel {
+  final String idRemessa;
   final int idCliente;
-  final String? cliente;
+  final String cliente;
   final int? documento;
   final String? email;
   final int? telefoneFixo;
@@ -28,8 +29,9 @@ class BoletoModel {
   final int idFatura;
   final String? referencia;
   BoletoModel({
+    required this.idRemessa,
     required this.idCliente,
-    this.cliente,
+    required this.cliente,
     this.documento,
     this.email,
     this.telefoneFixo,
@@ -55,8 +57,17 @@ class BoletoModel {
     this.referencia,
   });
 
+  int _quantidadeBoletos = 1;
+
+  void setQuantidadeBoletos() {
+    _quantidadeBoletos++;
+  }
+
+  int get quantidadeBoletos => _quantidadeBoletos;
+
   Map<String, dynamic> toMap() {
     final Map<String, dynamic> map = {
+      'ID Remessa': idRemessa,
       'ID Cliente': idCliente,
       'Cliente': cliente,
       'Documento': documento,
@@ -82,6 +93,7 @@ class BoletoModel {
       'Solicitante da Geração': solicitanteDaGeracao,
       'ID Fatura': idFatura,
       'Referencia': referencia ?? "",
+      'Quantida de Boletos': _quantidadeBoletos,
     };
     return map;
   }
@@ -124,10 +136,14 @@ class BoletoModel {
     ];
   }
 
-  factory BoletoModel.fromMapCsv(Map<String, dynamic> map) {
+  factory BoletoModel.fromMapCsv({
+    required Map<String, dynamic> map,
+    required String idRemessa,
+  }) {
     final boleto = BoletoModel(
+      idRemessa: idRemessa,
       idCliente: int.tryParse(map['ID Cliente'].toString()) ?? 0,
-      cliente: map['Cliente'] ?? '',
+      cliente: map['Cliente'],
       documento: int.tryParse(map['Documento'].toString()) ?? 0,
       email: map['Email'] ?? '',
       telefoneFixo: int.tryParse(map['Telefone Fixo']) ?? 0,
@@ -162,10 +178,14 @@ class BoletoModel {
     return boleto;
   }
 
-  factory BoletoModel.fromMapXlsx(Map<String, dynamic> map) {
+  factory BoletoModel.fromMapXlsx({
+    required Map<String, dynamic> map,
+    required String idRemessa,
+  }) {
     final boleto = BoletoModel(
+      idRemessa: idRemessa,
       idCliente: int.tryParse(map['ID Cliente'].toString()) ?? 0,
-      cliente: map['Cliente'] ?? '',
+      cliente: map['Cliente'],
       documento: int.tryParse(map['Documento'].toString()) ?? 0,
       email: map['Email'] ?? '',
       telefoneFixo: int.tryParse(map['Telefone Fixo']) ?? 0,
@@ -201,8 +221,9 @@ class BoletoModel {
 
   factory BoletoModel.fromMap(Map<String, dynamic> map) {
     final boleto = BoletoModel(
+      idRemessa: map['ID Remessa'],
       idCliente: int.tryParse(map['ID Cliente'].toString()) ?? 0,
-      cliente: map['Cliente'] ?? '',
+      cliente: map['Cliente'],
       documento: int.tryParse(map['Documento'].toString()) ?? 0,
       email: map['Email'] ?? '',
       telefoneFixo: map['Telefone Fixo'] ?? 0,
@@ -227,6 +248,7 @@ class BoletoModel {
       idFatura: int.tryParse(map['ID Fatura'].toString()) ?? 0,
       referencia: map['Referencia'] ?? '',
     );
+    boleto._quantidadeBoletos = map['Quantida de Boletos'];
     return boleto;
   }
 
@@ -237,7 +259,7 @@ class BoletoModel {
 
   @override
   String toString() {
-    return 'BoletoModel(idCliente: $idCliente, cliente: $cliente, documento: $documento, email: $email, telefoneFixo: $telefoneFixo, telefoneMovel: $telefoneMovel, idContrato: $idContrato, dataHabilitacaoContrato: $dataHabilitacaoContrato, numeroDeBoleto: $numeroDeBoleto, formaDeCobranca: $formaDeCobranca, dataVencimentoFatura: $dataVencimentoFatura, valorFatura: $valorFatura, dataEmissaoFatura: $dataEmissaoFatura, arquivo: $arquivo, dataImpressaoFatura: $dataImpressaoFatura, uf: $uf, cidade: $cidade, bairro: $bairro, tipoLogradouro: $tipoLogradouro, logradouro: $logradouro, numero: $numero, cep: $cep, solicitanteDaGeracao: $solicitanteDaGeracao, idFatura: $idFatura, referencia: $referencia)';
+    return 'BoletoModel(idRemessa: $idRemessa, idContrato: $idContrato, idCliente: $idCliente, cliente: $cliente, numeroDeBoleto: $numeroDeBoleto, quantidadeDeBoletos: $quantidadeBoletos)';
   }
 
   @override
@@ -245,6 +267,7 @@ class BoletoModel {
     if (identical(this, other)) return true;
 
     return other is BoletoModel &&
+        other.idRemessa == idRemessa &&
         other.idCliente == idCliente &&
         other.cliente == cliente &&
         other.documento == documento &&
@@ -274,7 +297,8 @@ class BoletoModel {
 
   @override
   int get hashCode {
-    return idCliente.hashCode ^
+    return idRemessa.hashCode ^
+        idCliente.hashCode ^
         cliente.hashCode ^
         documento.hashCode ^
         email.hashCode ^
