@@ -2,42 +2,45 @@ import 'dart:convert';
 import 'package:dependencies_module/dependencies_module.dart';
 
 class RemessaModel {
+  final String _id;
   final String nomeArquivo;
   final Timestamp data;
   final Timestamp upload;
-  final List<BoletoModel> remessa;
+  final List<dynamic> idsClientes;
   final int quantidadeProtocolos;
   RemessaModel({
     required this.nomeArquivo,
     required this.data,
     required this.upload,
-    required this.remessa,
-  }) : quantidadeProtocolos = remessa.length;
+    required this.idsClientes,
+    String? id,
+  })  : quantidadeProtocolos = idsClientes.length,
+        _id = id ?? const Uuid().v1();
+
+  // ignore: prefer_final_fields
+  // id = const Uuid().v1();
+  String get id => _id;
 
   Map<String, dynamic> toMap() {
     final Map<String, dynamic> map = {
+      'id': id,
       'nomeArquivo': nomeArquivo,
       'data': data,
       'upload': upload,
-      'remessa': remessa.map((x) => x.toMap()).toList(),
+      'idsClientes': idsClientes,
     };
     return map;
   }
 
   factory RemessaModel.fromMap(Map<String, dynamic> map) {
-    // print("#####");
-    // print(map['data']);
-    // print("#####");
-    // print("#####");
-    // print(DateTime.fromMillisecondsSinceEpoch(map['data']));
-    // print("#####");
-    return RemessaModel(
+    final model = RemessaModel(
       nomeArquivo: map['nomeArquivo'] ?? '',
       data: map['data'],
       upload: map['upload'],
-      remessa: List<BoletoModel>.from(
-          map['remessa']?.map((x) => BoletoModel.fromMap(x))),
+      idsClientes: map['idsClientes'],
+      id: map['id'],
     );
+    return model;
   }
 
   String toJson() => json.encode(toMap());
@@ -47,7 +50,7 @@ class RemessaModel {
 
   @override
   String toString() =>
-      'RemessaModel(nome do arquivo: $nomeArquivo, upload: $upload, data: ${dataFormatoDDMMYYYY.format(data.toDate())}, remessa: $remessa, quantidade de protocolos: $quantidadeProtocolos)';
+      'RemessaModel(Id: $id, Nome do arquivo: $nomeArquivo, Upload: $upload, Data: ${dataFormatoDDMMYYYY.format(data.toDate())}, Ids Clientes: $idsClientes, Quantidade de protocolos: $quantidadeProtocolos)';
 
   @override
   bool operator ==(Object other) {
@@ -56,9 +59,10 @@ class RemessaModel {
     return other is RemessaModel &&
         other.nomeArquivo == nomeArquivo &&
         other.data == data &&
-        listEquals(other.remessa, remessa);
+        listEquals(other.idsClientes, idsClientes);
   }
 
   @override
-  int get hashCode => nomeArquivo.hashCode ^ data.hashCode ^ remessa.hashCode;
+  int get hashCode =>
+      nomeArquivo.hashCode ^ data.hashCode ^ idsClientes.hashCode;
 }

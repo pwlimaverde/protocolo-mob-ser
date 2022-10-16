@@ -53,13 +53,9 @@ class MapeamentoDadosArquivoHtmlDatasource
     try {
       var excel = flutterexcel.Excel.decodeBytes(map.values.first);
       flutterexcel.Sheet sheetObject = excel[excel.getDefaultSheet()!];
-      // List<List<dynamic>> listXlsx = [];
       Map<String, dynamic> mapXlsx = {};
-      // List<List<dynamic>> listaDados = [];
-      List<Map<String, String>> mapDados = [];
-
-      // listXlsx.addAll(decoder.tables[decoder.tables.keys.first]!.rows);
-      // print(listXlsx);
+      List<Map<String, String>> mapBoletos = [];
+      List<int> idsClienteList = [];
 
       mapXlsx.addAll({"nome do arquivo": map.keys.first.split(".")[0]});
       final dataProcessada = DateTime.parse(sheetObject.rows[0][24]?.value);
@@ -67,35 +63,46 @@ class MapeamentoDadosArquivoHtmlDatasource
 
       mapXlsx.addAll({"tipo do arquivo": "xlsx"});
 
-      // listaDados.addAll(listXlsx);
-      // listaDados.removeRange(0, 2);
-
       if (sheetObject.rows.isNotEmpty) {
         final cabecario = sheetObject.rows[1];
         sheetObject.removeRow(0);
         sheetObject.removeRow(0);
 
         for (List<flutterexcel.Data?> row in sheetObject.rows) {
-          Map<String, String> modelJason = {};
+          Map<String, String> boletoModelJason = {};
           for (flutterexcel.Data? celula in row) {
             int indexL = row.indexOf(celula);
-            modelJason.addAll(
+            boletoModelJason.addAll(
                 {"${cabecario[indexL]?.value}": "${celula?.value ?? "."}"});
           }
-          final key1 = modelJason.keys.first;
-          final value1 = int.tryParse(modelJason['ID Cliente'].toString());
+          final key1 = boletoModelJason.keys.first;
+          final value1 =
+              int.tryParse(boletoModelJason['ID Cliente'].toString());
           if (key1 == 'ID Cliente' && value1 != null && value1 > 0) {
-            mapDados.add(modelJason);
+            final boletoDuplicado = mapBoletos
+                    .where((element) =>
+                        element['ID Cliente'] == boletoModelJason['ID Cliente'])
+                    .length ==
+                1;
+            if (boletoDuplicado) {
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
+            } else {
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
+              mapBoletos.add(boletoModelJason);
+            }
           }
         }
       }
-      mapXlsx.addAll({"remessa": mapDados});
+      mapXlsx.addAll({"boletos": mapBoletos});
+      mapXlsx.addAll({"ID Clientes": idsClienteList});
+
       return mapXlsx;
     } catch (e) {
       Map<String, dynamic> mapCatch = {
         "nome do arquivo": map.keys.first.split(".")[0],
         "data da remessa": DateTime.now(),
-        "remessa": <Map<String, String>>[],
+        "boletos": <Map<String, String>>[],
+        "ID Clientes": <Map<String, String>>[],
       };
       return mapCatch;
     }
@@ -109,7 +116,8 @@ class MapeamentoDadosArquivoHtmlDatasource
       List<List<dynamic>> listCsv = [];
       List<List<dynamic>> listaDados = [];
       Map<String, dynamic> mapCsv = {};
-      List<Map<String, String>> mapDados = [];
+      List<Map<String, String>> mapBoletos = [];
+      List<int> idsClienteList = [];
 
       listCsv.addAll(
           const CsvToListConverter(fieldDelimiter: ";").convert(decoderByte));
@@ -126,27 +134,41 @@ class MapeamentoDadosArquivoHtmlDatasource
       if (listaDados.isNotEmpty) {
         List<dynamic> cabecario = listCsv[1];
         for (List<dynamic> lista in listaDados) {
-          Map<String, String> modelJason = {};
+          Map<String, String> boletoModelJason = {};
           int index = 0;
           for (dynamic item in lista) {
-            modelJason
+            boletoModelJason
                 .addAll({"${cabecario[index]}": item != "" ? "$item" : "."});
             index++;
           }
-          final key1 = modelJason.keys.first;
-          final value1 = int.tryParse(modelJason['ID Cliente'].toString());
+          final key1 = boletoModelJason.keys.first;
+          final value1 =
+              int.tryParse(boletoModelJason['ID Cliente'].toString());
           if (key1 == 'ID Cliente' && value1 != null && value1 > 0) {
-            mapDados.add(modelJason);
+            final boletoDuplicado = mapBoletos
+                    .where((element) =>
+                        element['ID Cliente'] == boletoModelJason['ID Cliente'])
+                    .length ==
+                1;
+            if (boletoDuplicado) {
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
+            } else {
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
+              mapBoletos.add(boletoModelJason);
+            }
           }
         }
       }
-      mapCsv.addAll({"remessa": mapDados});
+      mapCsv.addAll({"boletos": mapBoletos});
+      mapCsv.addAll({"ID Clientes": idsClienteList});
+
       return mapCsv;
     } catch (e) {
       Map<String, dynamic> mapCatch = {
         "nome do arquivo": map.keys.first.split(".")[0],
         "data da remessa": DateTime.now(),
-        "remessa": <Map<String, String>>[],
+        "boletos": <Map<String, String>>[],
+        "ID Clientes": <Map<String, String>>[],
       };
       return mapCatch;
     }

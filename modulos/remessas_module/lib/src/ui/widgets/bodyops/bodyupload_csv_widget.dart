@@ -102,7 +102,7 @@ _todasRemessasList() {
                         designSystemController.iconButtonPrint(
                           filtro: remessaModel,
                         ),
-                        SizedBox(
+                        const SizedBox(
                           width: 15,
                         ),
                         designSystemController.iconDownloadXlsx(

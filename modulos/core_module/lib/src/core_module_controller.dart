@@ -1,25 +1,12 @@
 import 'package:dependencies_module/dependencies_module.dart';
 import 'package:flutter/material.dart';
 
-class CoreModuleController extends GetxController
-    with LoaderMixin, MessagesMixin {
+class CoreModuleController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loaderListener(
-      statusLoad: statusLoad,
-    );
-    messageListener(
-      message: message,
-    );
     pageAtual(Get.find<GetStorage>().read("pageAtual"));
   }
-
-  //Controller de Loading
-  final statusLoad = false.obs;
-
-  //Controller de Messages
-  final message = Rxn<MessageModel>();
 
   //Controller de Pages
   final pageAtual = 0.obs;
