@@ -17,6 +17,12 @@ mixin LoaderMixin on GetxController {
         } else {
           Get.back();
         }
+        if (!loading) {
+          bool? dialogOpen = Get.isDialogOpen;
+          if (dialogOpen != null && dialogOpen) {
+            Navigator.pop(Get.context!);
+          }
+        }
       },
     );
   }
