@@ -16,8 +16,8 @@ class ProcessamentoDadosArquivoHtmlDatasource
           final List<Map<String, String>> listaBoletos =
               mapRemessa["arquivo"]["boletos"];
 
-          final List<int> listaIdsContrato =
-              mapRemessa["arquivo"]["ID Contratos"];
+          final List<int> listaIdsClientes =
+              mapRemessa["arquivo"]["ID Clientes"];
 
           final DateTime data = mapRemessa["arquivo"]["data da remessa"];
           final String tipo = mapRemessa["arquivo"]["tipo do arquivo"];
@@ -27,13 +27,13 @@ class ProcessamentoDadosArquivoHtmlDatasource
               nomeArquivo: nomeArquivo,
               data: Timestamp.fromDate(data),
               upload: Timestamp.fromDate(DateTime.now()),
-              idsContrato: _idsContrato(filtro: listaIdsContrato),
+              idsClientes: _idsClientes(filtro: listaIdsClientes),
             );
 
             final boletos = await _processamentoBoleto(
               tipoArquivo: tipo,
               listaBoletos: listaBoletos,
-              listaIdsContrato: listaIdsContrato,
+              listaIdsClientes: listaIdsClientes,
               idRemessa: remessa.id,
             );
             remessasProcessadas.add({
@@ -45,7 +45,7 @@ class ProcessamentoDadosArquivoHtmlDatasource
               nomeArquivo: nomeArquivo,
               data: Timestamp.fromDate(data),
               upload: Timestamp.fromDate(DateTime.now()),
-              idsContrato: <int>[],
+              idsClientes: <int>[],
             );
             remessasProcessadasError
                 .add({"remessa": remessa, "boletos": <BoletoModel>[]});
@@ -66,7 +66,7 @@ class ProcessamentoDadosArquivoHtmlDatasource
   }
 }
 
-List<int> _idsContrato({required List<int> filtro}) {
+List<int> _idsClientes({required List<int> filtro}) {
   final listIdsBoletos = <int>[];
   for (int id in filtro) {
     if (!listIdsBoletos.contains(id)) {
@@ -80,7 +80,7 @@ Future<List<BoletoModel>> _processamentoBoleto({
   required List<Map<String, String>> listaBoletos,
   required String tipoArquivo,
   required String idRemessa,
-  required List<int> listaIdsContrato,
+  required List<int> listaIdsClientes,
 }) async {
   List<BoletoModel> boletos = [];
 
@@ -91,8 +91,8 @@ Future<List<BoletoModel>> _processamentoBoleto({
           idRemessa: idRemessa,
           map: boleto,
         );
-        final quantBoletos = listaIdsContrato
-            .where((element) => element == model.idContrato)
+        final quantBoletos = listaIdsClientes
+            .where((element) => element == model.idCliente)
             .length;
         for (int id = 1; id < quantBoletos; id++) {
           model.setQuantidadeBoletos();
@@ -104,8 +104,8 @@ Future<List<BoletoModel>> _processamentoBoleto({
           idRemessa: idRemessa,
           map: boleto,
         );
-        final quantBoletos = listaIdsContrato
-            .where((element) => element == model.idContrato)
+        final quantBoletos = listaIdsClientes
+            .where((element) => element == model.idCliente)
             .length;
         for (int id = 1; id < quantBoletos; id++) {
           model.setQuantidadeBoletos();

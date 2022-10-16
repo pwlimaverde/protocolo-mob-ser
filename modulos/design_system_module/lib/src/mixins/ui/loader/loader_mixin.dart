@@ -17,18 +17,6 @@ mixin LoaderMixin on GetxController {
         } else {
           Get.back();
         }
-        // WidgetsBinding.instance.addPostFrameCallback((duration) async {
-        //   if (loading) {
-        //     Get.dialog(
-        //       const Center(
-        //         child: CircularProgressIndicator(),
-        //       ),
-        //     );
-        //     Get.back();
-        //   } else {
-        //     Get.back();
-        //   }
-        // });
       },
     );
   }

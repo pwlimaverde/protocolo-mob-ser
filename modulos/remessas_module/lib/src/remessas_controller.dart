@@ -2,11 +2,16 @@ import 'package:dependencies_module/dependencies_module.dart';
 import 'package:flutter/material.dart';
 import 'package:remessas_module/src/utils/errors/erros_remessas.dart';
 
+import 'features/carregar_boletos_firebase/domain/usecase/carregar_boletos_firebase_usecase.dart';
+import 'utils/parametros/parametros_remessas_module.dart';
+
 class RemessasController extends GetxController
     with GetSingleTickerProviderStateMixin {
   final CarregarRemessasFirebaseUsecase carregarRemessasFirebaseUsecase;
+  final CarregarBoletosFirebaseUsecase carregarBoletosFirebaseUsecase;
   RemessasController({
     required this.carregarRemessasFirebaseUsecase,
+    required this.carregarBoletosFirebaseUsecase,
   });
 
   final List<Tab> myTabs = <Tab>[
@@ -67,6 +72,30 @@ class RemessasController extends GetxController
 
     if (uploadFirebase.status == StatusResult.success) {
       _listTadasRemessas.bindStream(uploadFirebase.result);
+    }
+  }
+
+  Future<List<BoletoModel>> carregarBoletos(
+      {required RemessaModel remessa}) async {
+    final carregarBoletos = await carregarBoletosFirebaseUsecase(
+      parameters: ParametrosCarregarBoletos(
+        error: ErroUploadArquivo(message: "Error ao carregar os boletos"),
+        showRuntimeMilliseconds: true,
+        nameFeature: "Carregar Boletos",
+        remessaCarregada: remessa,
+      ),
+    );
+
+    if (carregarBoletos.status == StatusResult.success) {
+      final List<BoletoModel> boletos = carregarBoletos.result;
+      boletos.sort(
+        (a, b) => a.cliente.compareTo(b.cliente),
+      );
+
+      return boletos;
+    } else {
+      throw Exception(
+          "Erro ao carregar os dados dos boletos do banco de dados");
     }
   }
 

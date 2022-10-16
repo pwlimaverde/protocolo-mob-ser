@@ -55,7 +55,7 @@ class MapeamentoDadosArquivoHtmlDatasource
       flutterexcel.Sheet sheetObject = excel[excel.getDefaultSheet()!];
       Map<String, dynamic> mapXlsx = {};
       List<Map<String, String>> mapBoletos = [];
-      List<int> idsContratoList = [];
+      List<int> idsClienteList = [];
 
       mapXlsx.addAll({"nome do arquivo": map.keys.first.split(".")[0]});
       final dataProcessada = DateTime.parse(sheetObject.rows[0][24]?.value);
@@ -81,21 +81,20 @@ class MapeamentoDadosArquivoHtmlDatasource
           if (key1 == 'ID Cliente' && value1 != null && value1 > 0) {
             final boletoDuplicado = mapBoletos
                     .where((element) =>
-                        element['ID Contrato'] ==
-                        boletoModelJason['ID Contrato'])
+                        element['ID Cliente'] == boletoModelJason['ID Cliente'])
                     .length ==
                 1;
             if (boletoDuplicado) {
-              idsContratoList.add(int.parse(boletoModelJason['ID Contrato']!));
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
             } else {
-              idsContratoList.add(int.parse(boletoModelJason['ID Contrato']!));
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
               mapBoletos.add(boletoModelJason);
             }
           }
         }
       }
       mapXlsx.addAll({"boletos": mapBoletos});
-      mapXlsx.addAll({"ID Contratos": idsContratoList});
+      mapXlsx.addAll({"ID Clientes": idsClienteList});
 
       return mapXlsx;
     } catch (e) {
@@ -103,7 +102,7 @@ class MapeamentoDadosArquivoHtmlDatasource
         "nome do arquivo": map.keys.first.split(".")[0],
         "data da remessa": DateTime.now(),
         "boletos": <Map<String, String>>[],
-        "ID Contratos": <Map<String, String>>[],
+        "ID Clientes": <Map<String, String>>[],
       };
       return mapCatch;
     }
@@ -118,7 +117,7 @@ class MapeamentoDadosArquivoHtmlDatasource
       List<List<dynamic>> listaDados = [];
       Map<String, dynamic> mapCsv = {};
       List<Map<String, String>> mapBoletos = [];
-      List<int> idsContratoList = [];
+      List<int> idsClienteList = [];
 
       listCsv.addAll(
           const CsvToListConverter(fieldDelimiter: ";").convert(decoderByte));
@@ -148,21 +147,20 @@ class MapeamentoDadosArquivoHtmlDatasource
           if (key1 == 'ID Cliente' && value1 != null && value1 > 0) {
             final boletoDuplicado = mapBoletos
                     .where((element) =>
-                        element['ID Contrato'] ==
-                        boletoModelJason['ID Contrato'])
+                        element['ID Cliente'] == boletoModelJason['ID Cliente'])
                     .length ==
                 1;
             if (boletoDuplicado) {
-              idsContratoList.add(int.parse(boletoModelJason['ID Contrato']!));
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
             } else {
-              idsContratoList.add(int.parse(boletoModelJason['ID Contrato']!));
+              idsClienteList.add(int.parse(boletoModelJason['ID Cliente']!));
               mapBoletos.add(boletoModelJason);
             }
           }
         }
       }
       mapCsv.addAll({"boletos": mapBoletos});
-      mapCsv.addAll({"ID Contratos": idsContratoList});
+      mapCsv.addAll({"ID Clientes": idsClienteList});
 
       return mapCsv;
     } catch (e) {
@@ -170,7 +168,7 @@ class MapeamentoDadosArquivoHtmlDatasource
         "nome do arquivo": map.keys.first.split(".")[0],
         "data da remessa": DateTime.now(),
         "boletos": <Map<String, String>>[],
-        "ID Contratos": <Map<String, String>>[],
+        "ID Clientes": <Map<String, String>>[],
       };
       return mapCatch;
     }

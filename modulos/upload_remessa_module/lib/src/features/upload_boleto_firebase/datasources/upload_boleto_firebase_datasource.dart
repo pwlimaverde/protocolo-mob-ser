@@ -15,7 +15,7 @@ class UploadBoletoFirebaseDatasource implements Datasource<bool> {
             .collection("remessas")
             .doc(parameters.boletoUpload.idRemessa)
             .collection("boletos")
-            .doc(parameters.boletoUpload.idContrato.toString())
+            .doc(parameters.boletoUpload.idCliente.toString())
             .set(mapBoleto);
 
         return true;

@@ -4,7 +4,7 @@ import 'package:dependencies_module/dependencies_module.dart';
 class BoletoModel {
   final String idRemessa;
   final int idCliente;
-  final String? cliente;
+  final String cliente;
   final int? documento;
   final String? email;
   final int? telefoneFixo;
@@ -31,7 +31,7 @@ class BoletoModel {
   BoletoModel({
     required this.idRemessa,
     required this.idCliente,
-    this.cliente,
+    required this.cliente,
     this.documento,
     this.email,
     this.telefoneFixo,
@@ -143,7 +143,7 @@ class BoletoModel {
     final boleto = BoletoModel(
       idRemessa: idRemessa,
       idCliente: int.tryParse(map['ID Cliente'].toString()) ?? 0,
-      cliente: map['Cliente'] ?? '',
+      cliente: map['Cliente'],
       documento: int.tryParse(map['Documento'].toString()) ?? 0,
       email: map['Email'] ?? '',
       telefoneFixo: int.tryParse(map['Telefone Fixo']) ?? 0,
@@ -185,7 +185,7 @@ class BoletoModel {
     final boleto = BoletoModel(
       idRemessa: idRemessa,
       idCliente: int.tryParse(map['ID Cliente'].toString()) ?? 0,
-      cliente: map['Cliente'] ?? '',
+      cliente: map['Cliente'],
       documento: int.tryParse(map['Documento'].toString()) ?? 0,
       email: map['Email'] ?? '',
       telefoneFixo: int.tryParse(map['Telefone Fixo']) ?? 0,
@@ -223,7 +223,7 @@ class BoletoModel {
     final boleto = BoletoModel(
       idRemessa: map['ID Remessa'],
       idCliente: int.tryParse(map['ID Cliente'].toString()) ?? 0,
-      cliente: map['Cliente'] ?? '',
+      cliente: map['Cliente'],
       documento: int.tryParse(map['Documento'].toString()) ?? 0,
       email: map['Email'] ?? '',
       telefoneFixo: map['Telefone Fixo'] ?? 0,

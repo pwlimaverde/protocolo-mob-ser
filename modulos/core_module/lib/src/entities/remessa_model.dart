@@ -6,15 +6,15 @@ class RemessaModel {
   final String nomeArquivo;
   final Timestamp data;
   final Timestamp upload;
-  final List<dynamic> idsContrato;
+  final List<dynamic> idsClientes;
   final int quantidadeProtocolos;
   RemessaModel({
     required this.nomeArquivo,
     required this.data,
     required this.upload,
-    required this.idsContrato,
+    required this.idsClientes,
     String? id,
-  })  : quantidadeProtocolos = idsContrato.length,
+  })  : quantidadeProtocolos = idsClientes.length,
         _id = id ?? const Uuid().v1();
 
   // ignore: prefer_final_fields
@@ -27,7 +27,7 @@ class RemessaModel {
       'nomeArquivo': nomeArquivo,
       'data': data,
       'upload': upload,
-      'idsContrato': idsContrato,
+      'idsClientes': idsClientes,
     };
     return map;
   }
@@ -37,7 +37,7 @@ class RemessaModel {
       nomeArquivo: map['nomeArquivo'] ?? '',
       data: map['data'],
       upload: map['upload'],
-      idsContrato: map['idsContrato'],
+      idsClientes: map['idsClientes'],
       id: map['id'],
     );
     return model;
@@ -50,7 +50,7 @@ class RemessaModel {
 
   @override
   String toString() =>
-      'RemessaModel(Id: $id, Nome do arquivo: $nomeArquivo, Upload: $upload, Data: ${dataFormatoDDMMYYYY.format(data.toDate())}, Ids Contratos: $idsContrato, Quantidade de protocolos: $quantidadeProtocolos)';
+      'RemessaModel(Id: $id, Nome do arquivo: $nomeArquivo, Upload: $upload, Data: ${dataFormatoDDMMYYYY.format(data.toDate())}, Ids Clientes: $idsClientes, Quantidade de protocolos: $quantidadeProtocolos)';
 
   @override
   bool operator ==(Object other) {
@@ -59,10 +59,10 @@ class RemessaModel {
     return other is RemessaModel &&
         other.nomeArquivo == nomeArquivo &&
         other.data == data &&
-        listEquals(other.idsContrato, idsContrato);
+        listEquals(other.idsClientes, idsClientes);
   }
 
   @override
   int get hashCode =>
-      nomeArquivo.hashCode ^ data.hashCode ^ idsContrato.hashCode;
+      nomeArquivo.hashCode ^ data.hashCode ^ idsClientes.hashCode;
 }
