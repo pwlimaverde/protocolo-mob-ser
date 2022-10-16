@@ -1,7 +1,7 @@
 name: app_cliente_protocolo_mob_ser
 description: A new Flutter project.
 publish_to: 'none' 
-version: 0.0.2
+version: 0.0.3
 
 environment:
   sdk: '>=2.18.1 <3.0.0'
