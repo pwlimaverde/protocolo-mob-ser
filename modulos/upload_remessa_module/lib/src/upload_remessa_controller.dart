@@ -161,6 +161,8 @@ class UploadRemessaController extends GetxController
     if (remessasProcessadas.status == StatusResult.success) {
       final List<RemessaModel> listRemessa = [];
       final List<RemessaModel> listRemessaError = [];
+      final List<RemessaModel> listRemessasDuplicadas = [];
+      final List<RemessaModel> listRemessasNovas = [];
 
       final List<Map<String, dynamic>> listRemessaProcessadasMap =
           remessasProcessadas.result["remessasProcessadas"];
@@ -173,9 +175,6 @@ class UploadRemessaController extends GetxController
       for (Map<String, dynamic> remessa in listRemessaProcessadasErrorMap) {
         listRemessaError.add(remessa["remessa"]);
       }
-
-      final List<RemessaModel> listRemessasDuplicadas = [];
-      final List<RemessaModel> listRemessasNovas = [];
 
       for (RemessaModel remessa in listRemessa) {
         final consultaRemessa = remessasController.listTadasRemessas.where(

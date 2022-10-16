@@ -61,7 +61,7 @@ _tabBarView() {
       children: [
         _uploadRemessaList(),
         _duplicadasRemessaList(),
-        Center(),
+        _uploadRemessaListError(),
       ],
     ),
   );
@@ -101,8 +101,25 @@ _uploadRemessaList() {
                       ),
                     ],
                   ),
-                  trailing: designSystemController.iconButtonPrint(
-                      filtro: remessaModel),
+                  trailing: SizedBox(
+                    width: 115,
+                    height: 100,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        designSystemController.iconButtonPrint(
+                          filtro: remessaModel,
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        designSystemController.iconDownloadXlsx(
+                          filtro: remessaModel,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -147,8 +164,25 @@ _duplicadasRemessaList() {
                       ),
                     ],
                   ),
-                  trailing: designSystemController.iconButtonPrint(
-                      filtro: remessaModel),
+                  trailing: SizedBox(
+                    width: 115,
+                    height: 100,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        designSystemController.iconButtonPrint(
+                          filtro: remessaModel,
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        designSystemController.iconDownloadXlsx(
+                          filtro: remessaModel,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
