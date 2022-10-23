@@ -1,17 +1,34 @@
+import 'dart:convert';
+import 'dart:html' as html;
+
+import 'package:archive/archive.dart';
 import 'package:dependencies_module/dependencies_module.dart';
 import 'package:flutter/material.dart';
 import 'package:remessas_module/src/utils/errors/erros_remessas.dart';
-
-import 'features/carregar_boletos_firebase/domain/usecase/carregar_boletos_firebase_usecase.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
+import 'features/carregar_imagem_modelo_firebase/domain/usecase/carregar_imagem_modelo_firebase_usecase.dart';
+import 'features/limpar_analise_arquivos_firebase/domain/usecase/limpar_analise_arquivos_firebase_usecase.dart';
 import 'utils/parametros/parametros_remessas_module.dart';
 
 class RemessasController extends GetxController
     with GetSingleTickerProviderStateMixin {
+  final CarregarImagemModeloFirebaseUsecase carregarImagemModeloFirebaseUsecase;
+  final UploadArquivoHtmlPresenter uploadArquivoHtmlPresenter;
   final CarregarRemessasFirebaseUsecase carregarRemessasFirebaseUsecase;
   final CarregarBoletosFirebaseUsecase carregarBoletosFirebaseUsecase;
+  final MapeamentoNomesArquivoHtmlUsecase mapeamentoNomesArquivoHtmlUsecase;
+  final LimparAnaliseArquivosFirebaseUsecase
+      limparAnaliseArquivosFirebaseUsecase;
+  final UploadAnaliseArquivosFirebaseUsecase
+      uploadAnaliseArquivosFirebaseUsecase;
   RemessasController({
+    required this.carregarImagemModeloFirebaseUsecase,
+    required this.uploadArquivoHtmlPresenter,
     required this.carregarRemessasFirebaseUsecase,
     required this.carregarBoletosFirebaseUsecase,
+    required this.mapeamentoNomesArquivoHtmlUsecase,
+    required this.limparAnaliseArquivosFirebaseUsecase,
+    required this.uploadAnaliseArquivosFirebaseUsecase,
   });
 
   final List<Tab> myTabs = <Tab>[
@@ -35,7 +52,8 @@ class RemessasController extends GetxController
   @override
   void onReady() {
     super.onReady();
-    carregarRemessas();
+    _carregarImagemModelo();
+    _carregarRemessas();
   }
 
   @override
@@ -44,7 +62,26 @@ class RemessasController extends GetxController
     return super.onDelete;
   }
 
+  final _imagemModelo = Rxn<Uint8List>();
+
+  Uint8List? get imagemModelo => _imagemModelo.value;
+
   final _listTadasRemessas = <RemessaModel>[].obs;
+
+  Future<void> _carregarImagemModelo() async {
+    final modelo = await carregarImagemModeloFirebaseUsecase(
+      parameters: NoParams(
+        error: ErroUploadArquivo(
+          message: "Erro ao Erro ao carregar os arquivos.",
+        ),
+        showRuntimeMilliseconds: true,
+        nameFeature: "Carregamento de Arquivo",
+      ),
+    );
+    if (modelo.status == StatusResult.success) {
+      _imagemModelo(modelo.result);
+    }
+  }
 
   List<RemessaModel> get listTadasRemessas => _listTadasRemessas
     ..sort(
@@ -55,13 +92,266 @@ class RemessasController extends GetxController
     listTadasRemessas.clear();
   }
 
-  Future<void> carregarRemessas() async {
+  Future<void> setUploadNomesArquivos({required RemessaModel remessa}) async {
+    designSystemController.statusLoad(true);
+    await _uploadNomesArquivos(
+      arquivosDaRemessa: await _mapeamentoDadosArquivo(
+        listaMapBytes: await _carregarArquivos(),
+      ),
+      remessa: remessa,
+    );
+    designSystemController.statusLoad(false);
+  }
+
+  Future<void> limparAnalise({
+    required String idRemessa,
+  }) async {
+    await limparAnaliseArquivosFirebaseUsecase(
+      parameters: ParametrosLimparAnaliseArquivos(
+        error: ErroUploadArquivo(
+            message:
+                "Erro ao fazer o upload da Remessa para o banco de dados!"),
+        showRuntimeMilliseconds: true,
+        nameFeature: "upload firebase",
+        idRemessa: idRemessa,
+      ),
+    );
+  }
+
+  Future<void> _uploadNomesArquivos({
+    required List<Map<int, Uint8List>> arquivosDaRemessa,
+    required RemessaModel remessa,
+  }) async {
+    try {
+      if (arquivosDaRemessa.isNotEmpty) {
+        List<BoletoModel> boletosOrdenados =
+            await carregarBoletos(remessa: remessa);
+        List<dynamic> idsArquivosRemessa = [];
+        List<Uint8List> arquivos = [];
+        List<Map<String, dynamic>> arquivosOk = [];
+        int indexArquivoOk = 0;
+        List<int> idsOk = [];
+        List<int> idsError = [];
+        List<dynamic> idsCliente = remessa.idsClientes;
+        List<int> arquivosInvalidos = [];
+
+        final testeOK = remessa.protocolosOk;
+        if (testeOK != null) {
+          for (dynamic element in testeOK) {
+            idsOk.add(element);
+          }
+        }
+
+        for (Map<int, Uint8List> element in arquivosDaRemessa) {
+          idsArquivosRemessa.add(element.keys.first);
+        }
+
+        for (BoletoModel boleto in boletosOrdenados) {
+          final idCompare = int.tryParse(boleto.idCliente.toString());
+          final compare = arquivosDaRemessa
+              .where((element) => element.keys.first == idCompare)
+              .map((arquivo) => arquivo.values.first)
+              .toList();
+          arquivos.addAll(compare);
+          if (idCompare != null) {
+            if (compare.isNotEmpty) {
+              final compareOk =
+                  idsOk.where((element) => element == idCompare).length == 1;
+              if (!compareOk) {
+                idsOk.add(idCompare);
+                for (Uint8List pdf in compare) {
+                  arquivosOk.add({
+                    "ID Cliente": idCompare,
+                    "Cliente": boleto.cliente,
+                    "Arquivo": pdf,
+                    "Index": indexArquivoOk,
+                  });
+                  indexArquivoOk++;
+                }
+              }
+            } else {
+              final compareError =
+                  idsOk.where((element) => element == idCompare).length == 1;
+              if (!compareError) {
+                idsError.add(idCompare);
+              }
+            }
+          }
+        }
+
+        for (int arquivo in idsArquivosRemessa) {
+          final compare =
+              idsCliente.where((element) => element == arquivo).length == 1;
+          if (!compare) {
+            arquivosInvalidos.add(arquivo);
+          }
+        }
+
+        idsOk.sort(
+          (a, b) => a.compareTo(b),
+        );
+
+        final Map<String, List<int>> result = {
+          "Protocolos ok": idsOk,
+          "Protocolos sem boletos": idsError,
+          "Arquivos invalidos": arquivosInvalidos
+        };
+        _enviarNovaAnalise(
+          analise: result,
+          model: remessa,
+        );
+
+        _processamentoPdf(
+            arquivosPdfOk: arquivosOk, nomeRemessa: remessa.nomeArquivo);
+      }
+    } catch (e) {
+      designSystemController.message(
+        MessageModel.error(
+          title: 'Upload de Remessa',
+          message: 'Erro ao fazer o Upload da Remessa!',
+        ),
+      );
+      throw Exception("Erro ao fazer o Upload da Remessa!");
+    }
+  }
+
+  Future<void> _processamentoPdf({
+    required List<Map<String, dynamic>> arquivosPdfOk,
+    required String nomeRemessa,
+  }) async {
+    final Iterable<Future<Map<String, Uint8List>>> salvarPdfFuturo =
+        arquivosPdfOk.map(_salvarPdf);
+
+    final Future<Iterable<Map<String, Uint8List>>> waitedRemessas =
+        Future.wait(salvarPdfFuturo);
+
+    final teste = await waitedRemessas.then((value) => value.toList());
+
+    _downloadFilesAsZIP(files: teste, nomeRemessa: nomeRemessa);
+  }
+
+  Future<Map<String, Uint8List>> _salvarPdf(
+    Map<String, dynamic> mapArquivoPdf,
+  ) async {
+    final PdfDocument document =
+        PdfDocument(inputBytes: mapArquivoPdf["Arquivo"]);
+    document.pageSettings.margins = PdfMargins()..all = 5;
+    final List<int> bytes = document.saveSync();
+    Map<String, Uint8List> map = {
+      '${mapArquivoPdf["Index"] + 1} - ${mapArquivoPdf["ID Cliente"]} - ${mapArquivoPdf["Cliente"]}.pdf':
+          Uint8List.fromList(bytes)
+    };
+    return map;
+  }
+
+  Future<void> saveAndLaunchFile(List<int> bytes, String fileName) async {
+    html.AnchorElement(
+        href:
+            'data:application/octet-stream;charset=utf-16le;base64,${base64.encode(bytes)}')
+      ..setAttribute('download', fileName)
+      ..click();
+  }
+
+  _downloadFilesAsZIP(
+      {required List<Map<String, Uint8List>> files,
+      required String nomeRemessa}) {
+    var encoder = ZipEncoder();
+    var archive = Archive();
+
+    for (Map<String, Uint8List> file in files) {
+      ArchiveFile archiveFiles = ArchiveFile.noCompress(
+          file.keys.first, file.values.first.lengthInBytes, file.values.first);
+      archive.addFile(archiveFiles);
+    }
+
+    final outputStream = OutputStream(
+      byteOrder: LITTLE_ENDIAN,
+    );
+    final bytes = encoder.encode(archive,
+        level: Deflate.BEST_COMPRESSION, output: outputStream);
+
+    saveAndLaunchFile(bytes!, "Remessa ordenada - $nomeRemessa.zip");
+  }
+
+  Future<bool> _enviarNovaAnalise({
+    required RemessaModel model,
+    required Map<String, List<int>> analise,
+  }) async {
+    final uploadFirebase = await uploadAnaliseArquivosFirebaseUsecase(
+      parameters: ParametrosUploadAnaliseArquivos(
+        error: ErroUploadArquivo(
+            message:
+                "Erro ao fazer o upload da Remessa para o banco de dados!"),
+        showRuntimeMilliseconds: true,
+        nameFeature: "upload firebase",
+        mapAliseArquivos: analise,
+        remessa: model,
+      ),
+    );
+
+    if (uploadFirebase.status == StatusResult.success) {
+      return true;
+    } else {
+      designSystemController.message(
+        MessageModel.error(
+          title: 'Upload de Analise Firebase',
+          message: 'Erro enviar o Analise para o banco de dados!',
+        ),
+      );
+      throw Exception("Erro enviar a Analise para o banco de dados!");
+    }
+  }
+
+  Future<List<Map<int, Uint8List>>> _mapeamentoDadosArquivo(
+      {required List<Map<String, Uint8List>> listaMapBytes}) async {
+    final mapeamento = await mapeamentoNomesArquivoHtmlUsecase(
+      parameters: ParametrosMapeamentoArquivoHtml(
+        error: ErroUploadArquivo(
+          message: "Erro ao mapear os arquivos.",
+        ),
+        nameFeature: 'Mapeamento Arquivo',
+        showRuntimeMilliseconds: true,
+        listaMapBytes: listaMapBytes,
+      ),
+    );
+    if (mapeamento.status == StatusResult.success) {
+      return mapeamento.result;
+    } else {
+      designSystemController.message(
+        MessageModel.error(
+          title: 'Mapeamento de arquivos',
+          message: 'Erro ao mapear os arquivos.',
+        ),
+      );
+      throw Exception("Erro ao mapear os arquivos.");
+    }
+  }
+
+  Future<List<Map<String, Uint8List>>> _carregarArquivos() async {
+    final arquivos = await uploadArquivoHtmlPresenter(
+      parameters: NoParams(
+        error: ErroUploadArquivo(
+          message: "Erro ao Erro ao carregar os arquivos.",
+        ),
+        showRuntimeMilliseconds: true,
+        nameFeature: "Carregamento de Arquivo",
+      ),
+    );
+    if (arquivos.status == StatusResult.success) {
+      return arquivos.result;
+    } else {
+      designSystemController.message(
+        MessageModel.error(
+          title: 'Carregamento de arquivos',
+          message: 'Erro ao carregar os arquivos',
+        ),
+      );
+      throw Exception("Erro ao carregar os arquivos");
+    }
+  }
+
+  Future<void> _carregarRemessas() async {
     _clearLists();
-    // final processamento = await _processamentoDados(
-    //   listaMapBruta: await _mapeamentoDadosArquivo(
-    //     listaMapBytes: await _carregarArquivos(),
-    //   ),
-    // );
     final uploadFirebase = await carregarRemessasFirebaseUsecase(
       parameters: NoParams(
         error: ErroUploadArquivo(message: "Error ao carregar as remessas"),
@@ -98,183 +388,4 @@ class RemessasController extends GetxController
           "Erro ao carregar os dados dos boletos do banco de dados");
     }
   }
-
-  // Future<List<Map<String, Uint8List>>> _carregarArquivos() async {
-  //   final arquivos = await uploadArquivoHtmlPresenter(
-  //     parameters: NoParams(
-  //       error: ErroUploadArquivo(
-  //         message: "Erro ao fazer o upload do arquivo.",
-  //       ),
-  //       showRuntimeMilliseconds: true,
-  //       nameFeature: "Carregamento de Arquivo",
-  //     ),
-  //   );
-  //   if (arquivos.status == StatusResult.success) {
-  //     return arquivos.result;
-  //   } else {
-  //     designSystemController.message(
-  //       MessageModel.error(
-  //         title: 'Carregamento de arquivos',
-  //         message: 'Erro ao carregar os arquivos - ${arquivos.result}',
-  //       ),
-  //     );
-  //     throw Exception("Erro ao carregar os arquivos - ${arquivos.result}");
-  //   }
-  // }
-
-  // Future<List<Map<String, Map<String, dynamic>>>> _mapeamentoDadosArquivo(
-  //     {required List<Map<String, Uint8List>> listaMapBytes}) async {
-  //   final mapeamento = await mapeamentoDadosArquivoHtmlUsecase(
-  //     parameters: ParametrosMapeamentoArquivoHtml(
-  //       error: ErroUploadArquivo(
-  //         message: "Erro ao fazer o mapeamento do arquivo.",
-  //       ),
-  //       nameFeature: 'Mapeamento Arquivo',
-  //       showRuntimeMilliseconds: true,
-  //       listaMapBytes: listaMapBytes,
-  //     ),
-  //   );
-  //   if (mapeamento.status == StatusResult.success) {
-  //     return mapeamento.result;
-  //   } else {
-  //     designSystemController.message(
-  //       MessageModel.error(
-  //         title: 'Mapeamento de arquivos',
-  //         message: 'Erro ao mapear os arquivos - ${mapeamento.result}',
-  //       ),
-  //     );
-  //     throw Exception("Erro ao mapear os arquivos - ${mapeamento.result}");
-  //   }
-  // }
-
-  // Future<List<RemessaModel>> _processamentoDados({
-  //   required List<Map<String, Map<String, dynamic>>> listaMapBruta,
-  // }) async {
-  //   final remessasProcessadas = await processamentoDadosArquivoHtmlUsecase(
-  //     parameters: ParametrosProcessamentoArquivoHtml(
-  //       error: ErroUploadArquivo(
-  //         message: "Erro ao processar Arquivo",
-  //       ),
-  //       nameFeature: 'Processamento Arquivo',
-  //       listaMapBruta: listaMapBruta,
-  //       showRuntimeMilliseconds: true,
-  //     ),
-  //   );
-
-  //   if (remessasProcessadas.status == StatusResult.success) {
-  //     final listRemessa = remessasProcessadas.result["remessasProcessadas"];
-  //     final listRemessaError =
-  //         remessasProcessadas.result["remessasProcessadasError"];
-  //     designSystemController.message(
-  //       MessageModel.info(
-  //         title: "Processamento de OPS",
-  //         message:
-  //             "${listRemessa.length} Processadas com Sucesso! \n ${listRemessaError.length} Processadas com Erro!",
-  //       ),
-  //     );
-  //     if (listRemessaError.isNotEmpty) {
-  //       uploadRemessaListError(listRemessaError);
-  //     }
-  //     if (listRemessa.isNotEmpty) {
-  //       return listRemessa;
-  //     } else {
-  //       designSystemController.message(
-  //         MessageModel.error(
-  //           title: 'Processamento de OPS',
-  //           message: 'Erro! nenhuma OP a ser processada!',
-  //         ),
-  //       );
-  //       return <RemessaModel>[];
-  //     }
-  //   } else {
-  //     designSystemController.message(
-  //       MessageModel.error(
-  //         title: 'Processamento de OPS',
-  //         message: 'Erro ao processar as OPS!',
-  //       ),
-  //     );
-  //     return <RemessaModel>[];
-  //   }
-  // }
-
-  // Future<Map<String, List<OpsModel>>?> _triagemOps({
-  //   required List<OpsModel>? listaOps,
-  // }) async {
-  //   final uploadOps = listaOps != null
-  //       ? await uploadOpsUsecase(
-  //           parameters: ParametrosUploadOps(
-  //             error: ErroUploadOps(message: "Erro ao fazer o upload das Ops!"),
-  //             listaOpsCarregadas: listaOps,
-  //             nameFeature: 'Uploadv Ops',
-  //             showRuntimeMilliseconds: false,
-  //           ),
-  //         )
-  //       : null;
-
-  //   if (uploadOps is SuccessReturn<Map<String, List<OpsModel>>>) {
-  //     return uploadOps.result;
-  //   } else {
-  //     designSystemController.message(
-  //       MessageModel.error(
-  //         title: 'Triagem OPS',
-  //         message: 'Erro ao fazer a triagem das OPS!',
-  //       ),
-  //     );
-  //     return null;
-  //   }
-  // }
-
-  // Future<void> _uploadOps({
-  //   required Map<String, List<OpsModel>>? triagemOps,
-  // }) async {
-  //   if (triagemOps != null) {
-  //     final listOpsNovas = triagemOps["listOpsNovas"] ?? [];
-  //     final listOpsUpdate = triagemOps["listOpsUpdate"] ?? [];
-  //     final listOpsDuplicadas = triagemOps["listOpsDuplicadas"] ?? [];
-  //     if (listOpsNovas.isNotEmpty) {
-  //       final Iterable<Future<OpsModel>> enviarOpsFuturo =
-  //           listOpsNovas.map(_enviarNovaOp);
-
-  //       final Future<Iterable<OpsModel>> waited = Future.wait(enviarOpsFuturo);
-
-  //       await waited;
-  //       designSystemController.message(
-  //         MessageModel.info(
-  //           title: "Upload de OPS",
-  //           message: "Upload de ${listOpsNovas.length} Ops com Sucesso!",
-  //         ),
-  //       );
-  //       uploadCsvOpsList(listOpsNovas);
-  //     }
-  //     if (listOpsUpdate.isNotEmpty) {
-  //       final Iterable<Future<OpsModel>> enviarOpsFuturo =
-  //           listOpsUpdate.map(_enviarUpdateOp);
-
-  //       final Future<Iterable<OpsModel>> waited = Future.wait(enviarOpsFuturo);
-
-  //       await waited;
-  //       designSystemController.message(
-  //         MessageModel.info(
-  //           title: "Upload de OPS",
-  //           message: "Update de ${listOpsUpdate.length} Ops com Sucesso!",
-  //         ),
-  //       );
-  //       updateCsvOpsList(listOpsUpdate);
-  //     }
-  //     if (listOpsDuplicadas.isNotEmpty) {
-  //       designSystemController.message(
-  //         MessageModel.info(
-  //           title: "Upload de OPS",
-  //           message: "${listOpsDuplicadas.length} Ops duplicadas!",
-  //         ),
-  //       );
-  //       duplicadasCsvOpsList(listOpsDuplicadas);
-  //     }
-  //     _tabController.index = listOpsNovas.isNotEmpty
-  //         ? 0
-  //         : listOpsUpdate.isNotEmpty
-  //             ? 1
-  //             : 2;
-  //   }
-  // }
 }
