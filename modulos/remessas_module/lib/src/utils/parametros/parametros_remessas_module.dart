@@ -17,6 +17,42 @@ class ParametrosUploadRemessa implements ParametersReturnResult {
   });
 }
 
+class ParametrosUploadAnaliseArquivos implements ParametersReturnResult {
+  final RemessaModel remessa;
+  final Map<String, List<int>> mapAliseArquivos;
+  @override
+  final AppError error;
+  @override
+  final bool showRuntimeMilliseconds;
+  @override
+  final String nameFeature;
+
+  ParametrosUploadAnaliseArquivos({
+    required this.remessa,
+    required this.mapAliseArquivos,
+    required this.error,
+    required this.showRuntimeMilliseconds,
+    required this.nameFeature,
+  });
+}
+
+class ParametrosLimparAnaliseArquivos implements ParametersReturnResult {
+  final String idRemessa;
+  @override
+  final AppError error;
+  @override
+  final bool showRuntimeMilliseconds;
+  @override
+  final String nameFeature;
+
+  ParametrosLimparAnaliseArquivos({
+    required this.idRemessa,
+    required this.error,
+    required this.showRuntimeMilliseconds,
+    required this.nameFeature,
+  });
+}
+
 class ParametrosCarregarBoletos implements ParametersReturnResult {
   final RemessaModel remessaCarregada;
   @override
@@ -52,7 +88,7 @@ class ParametrosMapeamentoArquivoHtml implements ParametersReturnResult {
 }
 
 class ParametrosProcessamentoArquivoHtml implements ParametersReturnResult {
-  final List<Map<String, Map<String, dynamic>>> listaMapBruta;
+  final List<Map<String, List<int>>> listaMapBruta;
   @override
   final AppError error;
   @override

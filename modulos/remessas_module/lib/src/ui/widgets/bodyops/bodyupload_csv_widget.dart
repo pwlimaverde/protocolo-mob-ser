@@ -70,11 +70,12 @@ _todasRemessasList() {
           String nomeRemessa = remessaModel.nomeArquivo.length >= 100
               ? remessaModel.nomeArquivo.substring(0, 100)
               : remessaModel.nomeArquivo;
+
           return Center(
             child: Card(
               elevation: 0.5,
               child: SizedBox(
-                width: 615,
+                width: 700,
                 child: ListTile(
                   title: Text(nomeRemessa),
                   subtitle: Column(
@@ -90,10 +91,29 @@ _todasRemessasList() {
                       Text(
                         "Quantidade de Protocolos: ${remessaModel.quantidadeProtocolos.toString()}",
                       ),
+                      remessaModel.arquivosInvalidos != null
+                          ? remessaModel.arquivosInvalidos!.isNotEmpty
+                              ? Text(
+                                  "Arquivos inválidos: ${remessaModel.arquivosInvalidos.toString()}",
+                                  style: const TextStyle(color: Colors.red),
+                                )
+                              : Container()
+                          : Container(),
+                      // Padding(
+                      //   padding: const EdgeInsets.all(15.0),
+                      //   child: LinearPercentIndicator(
+                      //     animation: true,
+                      //     lineHeight: 20.0,
+                      //     animationDuration: 2000,
+                      //     percent: posicao.value,
+                      //     center: Text("${posicao * 100} %"),
+                      //     progressColor: Colors.greenAccent,
+                      //   ),
+                      // ),
                     ],
                   ),
                   trailing: SizedBox(
-                    width: 115,
+                    width: 310,
                     height: 100,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -106,6 +126,24 @@ _todasRemessasList() {
                           width: 15,
                         ),
                         designSystemController.iconDownloadXlsx(
+                          filtro: remessaModel,
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        designSystemController.iconUploadNomesArquivos(
+                          filtro: remessaModel,
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        designSystemController.iconDownloadAnalitic(
+                          filtro: remessaModel,
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        designSystemController.iconLimparAnalitic(
                           filtro: remessaModel,
                         ),
                       ],
