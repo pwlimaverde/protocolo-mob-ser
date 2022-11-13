@@ -1,4 +1,5 @@
 import 'package:dependencies_module/dependencies_module.dart';
+import 'package:design_system_module/src/mixins/ui/loading/loading_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_excel/excel.dart';
@@ -8,18 +9,26 @@ import 'package:printing/printing.dart';
 
 import 'mixins/ui/loader/loader_mixin.dart';
 import 'mixins/ui/messages/messages_mixin.dart';
+import 'widgets/botoes/botao_analise_pdf/botao_analise_pdf_widget.dart';
+import 'widgets/botoes/botao_download_relatorio/botao_download_relatorio_widget.dart';
+import 'widgets/botoes/botao_download_xlsx/botao_download_xlsx_widget.dart';
+import 'widgets/botoes/botao_limpar_analise/botao_limpar_analise_widget.dart';
+import 'widgets/botoes/botao_print_protocolo/botao_print_protocolo_widget.dart';
 import 'widgets/botoes/botao_upload/botao_upload_widget.dart';
 import 'widgets/header/header_widget.dart';
 import 'widgets/menu/menu_widget.dart';
 import 'widgets/right/right_widget.dart';
 
 class DesignSystemController extends GetxController
-    with LoaderMixin, MessagesMixin {
+    with LoaderMixin, LoadingMixin, MessagesMixin {
   @override
   void onInit() {
     super.onInit();
     loaderListener(
       statusLoad: statusLoad,
+    );
+    loaingListener(
+      loadingValue: _loadValue,
     );
     messageListener(
       message: message,
@@ -28,6 +37,12 @@ class DesignSystemController extends GetxController
 
   //Controller de Loading
   final statusLoad = false.obs;
+
+  final _loadValue = 0.0.obs;
+
+  void setLoading({required double value}) {
+    _loadValue(value);
+  }
 
   //Controller de Messages
   final message = Rxn<MessageModel>();
@@ -79,210 +94,6 @@ class DesignSystemController extends GetxController
     );
   }
 
-  // Widget _iconButtonSearch() {
-  //   return Obx(
-  //     () {
-  //       return opsController.buscando.value
-  //           ? BotaoForm(
-  //               form: FormGeral(
-  //                 controllerText: opsController.crtlBusca,
-  //                 hintText: "Digite a busca",
-  //                 labelText: "Busca",
-  //                 onChanged: (String value) {
-  //                   opsController.busca(value);
-  //                 },
-  //               ),
-  //               button: BotaoLimpar(
-  //                 size: 20,
-  //                 onPressed: _setLimpar,
-  //               ),
-  //             )
-  //           : BotaoSearch(
-  //               size: 20,
-  //               onPressed: _setBuscando,
-  //             );
-  //     },
-  //   );
-  // }
-
-  // void _setBuscando() {
-  //   opsController.buscando(!opsController.buscando.value);
-  // }
-
-  // void _setLimpar() {
-  //   opsController.crtlBusca.clear();
-  //   opsController.busca.value = null;
-  //   _setBuscando();
-  // }
-  Widget iconUploadNomesArquivos({required RemessaModel filtro}) {
-    return IconButton(
-      padding: const EdgeInsets.all(0),
-      alignment: Alignment.center,
-      icon: SizedBox(
-        height: 100,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              size: 20,
-              filtro.isOk ? Icons.check : Icons.analytics,
-              color: filtro.isOk ? Colors.green : Colors.grey,
-            ),
-            const Text(
-              "Analise",
-              style: TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-      onPressed: (() {
-        _setUploadNomesArquivos(remessa: filtro);
-      }),
-    );
-  }
-
-  Widget iconDownloadAnalitic({required RemessaModel filtro}) {
-    return IconButton(
-      padding: const EdgeInsets.all(0),
-      alignment: Alignment.center,
-      icon: SizedBox(
-        height: 100,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              size: 20,
-              filtro.isOk
-                  ? Icons.check
-                  : filtro.protocolosSemBoletos == null
-                      ? Icons.error_outline_outlined
-                      : Icons.error,
-              color: filtro.isOk
-                  ? Colors.green
-                  : filtro.protocolosSemBoletos == null
-                      ? Colors.grey
-                      : Colors.red,
-            ),
-            const Text(
-              "Relatorio",
-              style: TextStyle(fontSize: 10),
-            ),
-          ],
-        ),
-      ),
-      onPressed: (() {
-        _downloadAnalise(filtro: filtro);
-      }),
-    );
-  }
-
-  Widget iconDownloadXlsx({required RemessaModel filtro}) {
-    return IconButton(
-      padding: const EdgeInsets.all(0),
-      alignment: Alignment.center,
-      icon: const Icon(
-        size: 40,
-        Icons.download,
-        color: Colors.lightBlue,
-      ),
-      onPressed: (() {
-        _downloadXlsx(filtro: filtro);
-      }),
-    );
-  }
-
-  Widget iconLimparAnalitic({required RemessaModel filtro}) {
-    return IconButton(
-      padding: const EdgeInsets.all(0),
-      alignment: Alignment.center,
-      icon: SizedBox(
-        height: 100,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(
-              size: 20,
-              filtro.protocolosSemBoletos != null ||
-                      filtro.protocolosOk != null ||
-                      filtro.arquivosInvalidos != null
-                  ? Icons.cleaning_services
-                  : Icons.cleaning_services_outlined,
-              color: filtro.protocolosSemBoletos != null ||
-                      filtro.protocolosOk != null ||
-                      filtro.arquivosInvalidos != null
-                  ? Colors.amber
-                  : Colors.grey,
-            ),
-            const Text(
-              "Limpar",
-              style: TextStyle(fontSize: 10),
-            ),
-          ],
-        ),
-      ),
-      onPressed: (() {
-        _limparAnalise(filtro: filtro);
-      }),
-    );
-  }
-
-  Widget iconButtonPrint({required RemessaModel filtro}) {
-    return IconButton(
-      padding: const EdgeInsets.all(0),
-      alignment: Alignment.center,
-      icon: const Icon(
-        size: 40,
-        Icons.print,
-        color: Colors.lightGreen,
-      ),
-      onPressed: (() {
-        _showPrintDialog(filtro: filtro);
-      }),
-    );
-  }
-
-  Widget _iconButtonUpload() {
-    return BotaoUpload(
-      size: 20,
-      onPressed: _setUpload,
-    );
-  }
-
-  void _setUploadNomesArquivos({required RemessaModel remessa}) {
-    if (!remessa.isOk) {
-      remessasController.setUploadNomesArquivos(remessa: remessa);
-    } else {
-      designSystemController.message(MessageModel.info(
-        title: "Analise de Arquivos",
-        message: "Arquivos OK!",
-      ));
-    }
-  }
-
-  void _limparAnalise({required RemessaModel filtro}) {
-    if (filtro.protocolosSemBoletos != null ||
-        filtro.protocolosOk != null ||
-        filtro.arquivosInvalidos != null) {
-      remessasController.limparAnalise(idRemessa: filtro.id);
-      designSystemController.message(MessageModel.info(
-        title: "Limpesa da Analise",
-        message: "Dados limpos!",
-      ));
-    } else {
-      designSystemController.message(MessageModel.info(
-        title: "Limpesa da Analise",
-        message: "Sem dados para limpar!",
-      ));
-    }
-  }
-
-  void _setUpload() {
-    uploadRemessaController.setUploadRemessas();
-  }
-
   Widget _body({
     required Widget body,
     required int page,
@@ -326,11 +137,98 @@ class DesignSystemController extends GetxController
     );
   }
 
+  Widget botaoPrintProtocolo({required RemessaModel filtro}) {
+    return BotaoPrintProtocolo(
+      ativo: true,
+      size: 40,
+      onPressed: () => _showPrintDialog(filtro: filtro),
+    );
+  }
+
+  Widget botaoDownloadXlsx({required RemessaModel filtro}) {
+    return BotaoDownloadXlsx(
+      ativo: true,
+      size: 40,
+      onPressed: () => _downloadXlsx(filtro: filtro),
+    );
+  }
+
+  Widget botaoAnalisePdf({required RemessaModel filtro}) {
+    return BotaoAnalisePdf(
+      ativo: filtro.isOk,
+      height: 100,
+      width: 100,
+      size: 20,
+      onPressed: () => _setUploadAnalisePdf(remessa: filtro),
+    );
+  }
+
+  void _setUploadAnalisePdf({required RemessaModel remessa}) {
+    if (!remessa.isOk) {
+      remessasController.setUploadNomesArquivos(remessa: remessa);
+    } else {
+      designSystemController.message(MessageModel.info(
+        title: "Analise de Arquivos",
+        message: "Arquivos OK!",
+      ));
+    }
+  }
+
+  Widget botaoDownloadRelatorio({required RemessaModel filtro}) {
+    return BotaoDownloadRelatorio(
+      alerta: filtro.protocolosSemBoletos == null,
+      ativo: filtro.isOk,
+      height: 100,
+      width: 100,
+      size: 20,
+      onPressed: () => _downloadAnalise(filtro: filtro),
+    );
+  }
+
+  Widget botaoLimparAnalise({required RemessaModel filtro}) {
+    return BotaoLimparAnalise(
+      ativo: filtro.protocolosSemBoletos != null ||
+          filtro.protocolosOk != null ||
+          filtro.arquivosInvalidos != null,
+      height: 100,
+      width: 100,
+      size: 20,
+      onPressed: () => _limparAnalise(filtro: filtro),
+    );
+  }
+
+  void _limparAnalise({required RemessaModel filtro}) {
+    if (filtro.protocolosSemBoletos != null ||
+        filtro.protocolosOk != null ||
+        filtro.arquivosInvalidos != null) {
+      remessasController.limparAnalise(idRemessa: filtro.id);
+      designSystemController.message(MessageModel.info(
+        title: "Limpesa da Analise",
+        message: "Dados limpos!",
+      ));
+    } else {
+      designSystemController.message(MessageModel.info(
+        title: "Limpesa da Analise",
+        message: "Sem dados para limpar!",
+      ));
+    }
+  }
+
+  Widget _iconButtonUpload() {
+    return BotaoUpload(
+      size: 20,
+      onPressed: _setUpload,
+    );
+  }
+
+  void _setUpload() {
+    uploadRemessaController.setUploadRemessas();
+  }
+
   void _downloadAnalise({required RemessaModel filtro}) async {
     if (!filtro.isOk && filtro.protocolosSemBoletos != null) {
       List<BoletoModel> listaBoletosErro = [];
-      final boletosAnalise =
-          await remessasController.carregarBoletos(remessa: filtro);
+      final boletosAnalise = await remessasController.carregarBoletos(filtro);
 
       for (dynamic idErro in filtro.protocolosSemBoletos!) {
         for (BoletoModel boleto in boletosAnalise) {
@@ -453,7 +351,7 @@ class DesignSystemController extends GetxController
   }
 
   void _downloadXlsx({required RemessaModel filtro}) async {
-    final boletos = await remessasController.carregarBoletos(remessa: filtro);
+    final boletos = await remessasController.carregarBoletos(filtro);
     const camposKeys = <String>[
       "ID Cliente",
       "Cliente",
@@ -526,7 +424,7 @@ class DesignSystemController extends GetxController
       sheetObject
           .cell(CellIndex.indexByColumnRow(
               columnIndex: indexValor, rowIndex: indexBoleto))
-          .value = _gerarCodigoDeBarras(boleto: boleto);
+          .value = boleto.codigoDeBarras;
     }
 
     sheetObject.setColWidth(0, 10);
@@ -556,25 +454,8 @@ class DesignSystemController extends GetxController
     excel.save(fileName: "${filtro.nomeArquivo} - FILTRO.xlsx");
   }
 
-  String _gerarCodigoDeBarras({required BoletoModel boleto}) {
-    if (coreModuleController.isSufixo) {
-      final sufixo = coreModuleController.sufixo.toString().substring(0, 3);
-      final codBoleto = boleto.numeroDeBoleto.toString();
-      String complementoZero = "";
-      for (var zero = 0; zero < 14 - (codBoleto.length); zero++) {
-        complementoZero = "${complementoZero}0";
-      }
-      final tipo = boleto.formaDeCobranca!.contains("CARNE") ? "C" : "B";
-      const prefixo = "MB";
-      final padraoNovo = "$prefixo$tipo$complementoZero$codBoleto$sufixo";
-      return padraoNovo;
-    } else {
-      return boleto.numeroDeBoleto.toString();
-    }
-  }
-
-  _showPrintDialog({required RemessaModel filtro}) {
-    return Get.dialog(
+  void _showPrintDialog({required RemessaModel filtro}) {
+    Get.dialog(
       AlertDialog(
         title: const Text("Impressão da listagem dos Protoclos"),
         content: SizedBox(
@@ -643,7 +524,7 @@ class DesignSystemController extends GetxController
                     ),
                   ),
                   _codigoDeBarras(
-                    data: _gerarCodigoDeBarras(boleto: boletoModel),
+                    data: boletoModel.codigoDeBarras,
                   ),
                   pw.Padding(
                     padding: const pw.EdgeInsets.fromLTRB(0, 8, 3, 0),
@@ -864,7 +745,7 @@ class DesignSystemController extends GetxController
     required RemessaModel filtro,
   }) async {
     final pdf = pw.Document(version: PdfVersion.pdf_1_5, compress: true);
-    final boletos = await remessasController.carregarBoletos(remessa: filtro);
+    final boletos = await remessasController.carregarBoletos(filtro);
 
     final netImage = pw.MemoryImage(
       remessasController.imagemModelo!,
